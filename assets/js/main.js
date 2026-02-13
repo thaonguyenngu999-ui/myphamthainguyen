@@ -3,6 +3,11 @@ const DATA_URL = "assets/data/products.json";
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
 const BLOG_STORAGE_KEY = "mypham_blog_content";
 const BLOG_DATA_URL = "assets/data/blogs.json";
+const REMOTE_PRODUCTS_FALLBACK_URLS = [
+  String(window.SEO_CONFIG?.githubRawProductsUrl || "").trim(),
+  "https://raw.githubusercontent.com/thaonguyenngu999-ui/myphamthainguyen/main/assets/data/products.json",
+  "https://cdn.jsdelivr.net/gh/thaonguyenngu999-ui/myphamthainguyen@main/assets/data/products.json"
+].filter(Boolean);
 
 const productGrid = document.getElementById("productGrid");
 const searchInput = document.getElementById("searchInput");
@@ -1062,10 +1067,23 @@ async function loadProducts() {
     }
   }
   try {
-    const res = await fetch(DATA_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    allProducts = Array.isArray(data) ? data.map(normalizeProduct) : [];
+    const candidates = [...new Set([DATA_URL, "/assets/data/products.json", ...REMOTE_PRODUCTS_FALLBACK_URLS])];
+    let loaded = null;
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          loaded = data;
+          break;
+        }
+      } catch {
+        // try next source
+      }
+    }
+    if (!loaded) throw new Error("Cannot fetch products data.");
+    allProducts = loaded.map(normalizeProduct);
   } catch {
     if (localProducts.length) {
       allProducts = localProducts;

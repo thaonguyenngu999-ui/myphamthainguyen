@@ -1,6 +1,11 @@
 const STORAGE_KEY = "mypham_products";
 const BASE_PREFIX = /\/san-pham\/[^/]+\.html$/i.test(location.pathname) ? "../" : "";
 const DATA_URL = `${BASE_PREFIX}assets/data/products.json`;
+const REMOTE_PRODUCTS_FALLBACK_URLS = [
+  String(window.SEO_CONFIG?.githubRawProductsUrl || "").trim(),
+  "https://raw.githubusercontent.com/thaonguyenngu999-ui/myphamthainguyen/main/assets/data/products.json",
+  "https://cdn.jsdelivr.net/gh/thaonguyenngu999-ui/myphamthainguyen@main/assets/data/products.json"
+].filter(Boolean);
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
 const PAGE_SIZE = 20;
 
@@ -230,10 +235,20 @@ async function loadProducts() {
     }
   }
   try {
-    const response = await fetch(DATA_URL);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    return Array.isArray(data) ? data.map(normalizeProduct).filter(isUsableProduct) : [];
+    const candidates = [...new Set([DATA_URL, "/assets/data/products.json", ...REMOTE_PRODUCTS_FALLBACK_URLS])];
+    for (const url of candidates) {
+      try {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) continue;
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          return data.map(normalizeProduct).filter(isUsableProduct);
+        }
+      } catch {
+        // try next source
+      }
+    }
+    throw new Error("Cannot fetch products data.");
   } catch {
     return localProducts;
   }

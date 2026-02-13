@@ -1,5 +1,10 @@
 const STORAGE_KEY = "mypham_products";
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
+const REMOTE_PRODUCTS_FALLBACK_URLS = [
+  String(window.SEO_CONFIG?.githubRawProductsUrl || "").trim(),
+  "https://raw.githubusercontent.com/thaonguyenngu999-ui/myphamthainguyen/main/assets/data/products.json",
+  "https://cdn.jsdelivr.net/gh/thaonguyenngu999-ui/myphamthainguyen@main/assets/data/products.json"
+].filter(Boolean);
 
 const viewerImage = document.getElementById("viewerImage");
 const viewerVideo = document.getElementById("viewerVideo");
@@ -77,7 +82,7 @@ function getProductsDataUrlCandidates() {
   const fromBase = getProductsDataUrl();
   const absolute = `${location.origin}/assets/data/products.json`;
   const relative = "assets/data/products.json";
-  return [...new Set([fromBase, absolute, relative])];
+  return [...new Set([fromBase, absolute, relative, ...REMOTE_PRODUCTS_FALLBACK_URLS])];
 }
 
 function buildPrettyProductPath(slug) {
