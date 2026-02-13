@@ -705,8 +705,7 @@ function renderModalViewerByIndex(index) {
   const mediaItem = modalMediaList[index];
   if (!mediaItem) return;
   const imageSlot = document.getElementById("modalImageSlot");
-  const imgA = document.getElementById("modalImgA");
-  const imgB = document.getElementById("modalImgB");
+  const viewerImg = document.getElementById("modalViewerImage");
   const prevBtn = document.getElementById("modalPrevBtn");
   const nextBtn = document.getElementById("modalNextBtn");
   const showNav = modalMediaList.length > 1;
@@ -730,8 +729,7 @@ function renderModalViewerByIndex(index) {
     modalViewerVideo.onerror = () => {
       modalViewerVideo.classList.add("hidden");
       if (imageSlot) imageSlot.classList.remove("hidden");
-      if (imgA) { imgA.src = FALLBACK_IMAGE; imgA.classList.add("active"); }
-      if (imgB) imgB.classList.remove("active");
+      if (viewerImg) { viewerImg.src = FALLBACK_IMAGE; }
       modalVideoPlayOverlay?.classList.add("hidden");
     };
     return;
@@ -745,14 +743,12 @@ function renderModalViewerByIndex(index) {
 
   const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
   const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
-  const activeImg = imgA?.classList.contains("active") ? imgA : imgB;
-  const nextImg = activeImg === imgA ? imgB : imgA;
-  if (!nextImg) return;
-  nextImg.onerror = () => { nextImg.src = FALLBACK_IMAGE; nextImg.onerror = null; };
-  nextImg.src = bust;
-  nextImg.alt = activeModalProduct?.name || "Sản phẩm";
-  nextImg.classList.add("active");
-  activeImg.classList.remove("active");
+  const altText = `${activeModalProduct?.name || "Sản phẩm"} - ảnh ${index + 1}/${modalMediaList.length}`;
+  if (viewerImg) {
+    viewerImg.onerror = () => { viewerImg.src = FALLBACK_IMAGE; viewerImg.onerror = null; };
+    viewerImg.src = bust;
+    viewerImg.alt = altText;
+  }
 }
 
 function showModalMediaAt(index) {
@@ -768,6 +764,7 @@ function renderModalMedia(product) {
   modalMediaList = getModalMediaList(product);
   modalMediaIndex = 0;
   modalThumbs.innerHTML = "";
+  modalThumbs.classList.toggle("hidden", modalMediaList.length <= 1);
   renderModalViewerByIndex(0);
 
   modalMediaList.forEach((item, index) => {
@@ -781,7 +778,8 @@ function renderModalMedia(product) {
       btn.innerHTML = `<span class="thumb-video-icon">▶</span><span class="thumb-video-text">Video</span>`;
       btn.classList.add("thumb-video");
     } else {
-      btn.innerHTML = `<img src="${item.url}" alt="thumb" loading="lazy" />`;
+      const altThumb = `${activeModalProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
+      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" />`;
     }
 
     btn.addEventListener("click", (e) => {

@@ -43,22 +43,28 @@
 
     <section class="product-shell">
       <div class="detail-top">
-        <div class="detail-media">
+        <div class="detail-media gallery-wrap">
           <div class="detail-viewer product-gallery" id="productGallery">
-            <button id="prevMediaBtn" class="viewer-nav prev" type="button" aria-label="Ảnh trước">
-              <span class="material-icons" aria-hidden="true">chevron_left</span>
-            </button>
-            <button id="nextMediaBtn" class="viewer-nav next" type="button" aria-label="Ảnh sau">
-              <span class="material-icons" aria-hidden="true">chevron_right</span>
-            </button>
-            <div class="viewer-image-slot" id="viewerImageSlot">
-              <img class="gallery-img active" id="galleryImgA" src="" alt="" />
-              <img class="gallery-img" id="galleryImgB" src="" alt="" />
+            <div class="gallery-hero" aria-hidden="false">
+              <div class="viewer-image-slot" id="viewerImageSlot">
+                <img id="viewerImage" src="" alt="" />
+              </div>
+              <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
+              <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
+                <span class="material-icons" aria-hidden="true">play_arrow</span>
+              </button>
+              <div class="gallery-badges" aria-label="Badges sản phẩm">
+                <span class="badge">100% ảnh tự chụp</span>
+                <span class="badge">Handmade in Vietnam</span>
+                <span class="badge">Bảo hành 1 đổi 1</span>
+              </div>
+              <button id="prevMediaBtn" class="viewer-nav prev" type="button" aria-label="Ảnh trước">
+                <span class="material-icons" aria-hidden="true">chevron_left</span>
+              </button>
+              <button id="nextMediaBtn" class="viewer-nav next" type="button" aria-label="Ảnh sau">
+                <span class="material-icons" aria-hidden="true">chevron_right</span>
+              </button>
             </div>
-            <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
-            <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
-              <span class="material-icons" aria-hidden="true">play_arrow</span>
-            </button>
           </div>
           <div id="viewerThumbs" class="detail-thumbs"></div>
         </div>
@@ -204,19 +210,19 @@
 
       function renderMediaGallery(product) {
         var imageSlot = document.getElementById("viewerImageSlot");
-        var imgA = document.getElementById("galleryImgA");
-        var imgB = document.getElementById("galleryImgB");
+        var viewerImg = document.getElementById("viewerImage");
         var viewerVideo = document.getElementById("viewerVideo");
         var viewerThumbs = document.getElementById("viewerThumbs");
         var videoOverlay = document.getElementById("videoPlayOverlay");
         var prevBtn = document.getElementById("prevMediaBtn");
         var nextBtn = document.getElementById("nextMediaBtn");
-        if (!imageSlot || !viewerThumbs || !imgA || !imgB) return;
+        if (!imageSlot || !viewerThumbs || !viewerImg) return;
         var mediaList = getMediaList(product);
         var idx = 0;
         var showNav = mediaList.length > 1;
         if (prevBtn) prevBtn.classList.toggle("hidden", !showNav);
         if (nextBtn) nextBtn.classList.toggle("hidden", !showNav);
+        viewerThumbs.classList.toggle("hidden", mediaList.length <= 1);
         function setActive(i) {
           idx = (i + mediaList.length) % mediaList.length;
           mediaList.forEach(function (m, j) {
@@ -246,9 +252,7 @@
                 viewerVideo.src = "";
                 if (videoOverlay) videoOverlay.classList.add("hidden");
                 imageSlot.classList.remove("hidden");
-                imgA.src = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-                imgA.classList.add("active");
-                imgB.classList.remove("active");
+                viewerImg.src = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
               };
             }
           } else {
@@ -260,13 +264,9 @@
             }
             imageSlot.classList.remove("hidden");
             var url = (item.url || FALLBACK_IMG) + ((item.url || "").indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
-            var activeImg = imgA.classList.contains("active") ? imgA : imgB;
-            var nextImg = activeImg === imgA ? imgB : imgA;
-            nextImg.src = url;
-            nextImg.alt = product.name;
-            nextImg.onerror = function () { this.src = FALLBACK_IMG; this.onerror = null; };
-            nextImg.classList.add("active");
-            activeImg.classList.remove("active");
+            viewerImg.src = url;
+            viewerImg.alt = (product.name || "San pham") + " - anh " + (idx + 1) + "/" + mediaList.length;
+            viewerImg.onerror = function () { this.src = FALLBACK_IMG; this.onerror = null; };
           }
         }
         viewerThumbs.innerHTML = "";
@@ -279,7 +279,8 @@
             btn.classList.add("thumb-video");
             btn.innerHTML = "<span class=\"thumb-video-icon\">&#9654;</span><span class=\"thumb-video-text\">Video</span>";
           } else {
-            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"thumb\" loading=\"lazy\" tabindex=\"-1\" />";
+            var altThumb = (product.name || "San pham") + " - anh " + (i + 1);
+            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" tabindex=\"-1\" />";
           }
           btn.addEventListener("click", function (ev) {
             ev.preventDefault();

@@ -200,14 +200,13 @@ function renderViewerByIndex(index) {
   const mediaItem = currentMediaList[index];
   if (!mediaItem) return;
   const imageSlot = document.getElementById("viewerImageSlot");
-  const imgA = document.getElementById("galleryImgA");
-  const imgB = document.getElementById("galleryImgB");
   const prev = document.getElementById("prevMediaBtn");
   const next = document.getElementById("nextMediaBtn");
   const showNav = currentMediaList.length > 1;
   if (prev) prev.classList.toggle("hidden", !showNav);
   if (next) next.classList.toggle("hidden", !showNav);
 
+  const imgEl = document.getElementById("viewerImage");
   if (mediaItem.type === "video") {
     if (imageSlot) imageSlot.classList.add("hidden");
     viewerVideo.classList.remove("hidden");
@@ -225,8 +224,7 @@ function renderViewerByIndex(index) {
     viewerVideo.onerror = () => {
       viewerVideo.classList.add("hidden");
       if (imageSlot) imageSlot.classList.remove("hidden");
-      if (imgA) { imgA.src = FALLBACK_IMAGE; imgA.classList.add("active"); }
-      if (imgB) imgB.classList.remove("active");
+      if (imgEl) imgEl.src = FALLBACK_IMAGE;
       videoPlayOverlay?.classList.add("hidden");
     };
     return;
@@ -240,17 +238,13 @@ function renderViewerByIndex(index) {
 
   const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
   const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
-  const activeImg = imgA?.classList.contains("active") ? imgA : imgB;
-  const nextImg = activeImg === imgA ? imgB : imgA;
-  if (!nextImg) return;
-  nextImg.onerror = function () {
-    nextImg.src = FALLBACK_IMAGE;
-    nextImg.onerror = null;
-  };
-  nextImg.src = bust;
-  nextImg.alt = activeProduct?.name || "Ảnh sản phẩm";
-  nextImg.classList.add("active");
-  activeImg.classList.remove("active");
+  const altBase = activeProduct?.name || "Ảnh sản phẩm";
+  const altText = `${altBase} - ảnh ${currentMediaIndex + 1}/${currentMediaList.length}`;
+  if (imgEl) {
+    imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+    imgEl.src = bust;
+    imgEl.alt = altText;
+  }
 }
 
 function setActiveThumb(index) {
@@ -284,6 +278,7 @@ function renderMediaGallery(product) {
   const thumbsEl = document.getElementById("viewerThumbs");
   if (!thumbsEl) return;
   thumbsEl.innerHTML = "";
+  thumbsEl.classList.toggle("hidden", mediaList.length <= 1);
   renderViewerByIndex(0);
 
   mediaList.forEach((item, index) => {
@@ -297,7 +292,8 @@ function renderMediaGallery(product) {
       btn.classList.add("thumb-video");
       btn.innerHTML = `<span class="thumb-video-icon">▶</span><span class="thumb-video-text">Video</span>`;
     } else {
-      btn.innerHTML = `<img src="${item.url}" alt="thumb" loading="lazy" tabindex="-1" />`;
+      const altThumb = `${activeProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
+      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" />`;
     }
 
     btn.addEventListener("click", function (ev) {
@@ -490,13 +486,11 @@ function renderNotFound() {
   if (thumbs) thumbs.innerHTML = "";
   currentMediaList = [];
   const slot = document.getElementById("viewerImageSlot");
-  const imgA = document.getElementById("galleryImgA");
-  const imgB = document.getElementById("galleryImgB");
+  const imgEl = document.getElementById("viewerImage");
   const prev = document.getElementById("prevMediaBtn");
   const next = document.getElementById("nextMediaBtn");
   if (slot) slot.classList.remove("hidden");
-  if (imgA) { imgA.src = FALLBACK_IMAGE; imgA.classList.add("active"); imgA.alt = "Không tìm thấy"; }
-  if (imgB) { imgB.src = ""; imgB.classList.remove("active"); }
+  if (imgEl) { imgEl.src = FALLBACK_IMAGE; imgEl.alt = "Không tìm thấy"; }
   if (prev) prev.classList.add("hidden");
   if (next) next.classList.add("hidden");
   viewerVideo.classList.add("hidden");

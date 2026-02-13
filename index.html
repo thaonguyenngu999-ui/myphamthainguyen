@@ -233,22 +233,28 @@
       <button id="closeModalBtn" class="modal-close" aria-label="Đóng">×</button>
 
       <div class="detail-top">
-        <div class="detail-media">
+        <div class="detail-media gallery-wrap">
           <div class="detail-viewer product-gallery" id="modalGallery">
-            <button id="modalPrevBtn" class="viewer-nav prev" type="button" aria-label="Ảnh trước">
-              <span class="material-icons" aria-hidden="true">chevron_left</span>
-            </button>
-            <button id="modalNextBtn" class="viewer-nav next" type="button" aria-label="Ảnh sau">
-              <span class="material-icons" aria-hidden="true">chevron_right</span>
-            </button>
-            <div class="viewer-image-slot" id="modalImageSlot">
-              <img class="gallery-img active" id="modalImgA" src="" alt="" />
-              <img class="gallery-img" id="modalImgB" src="" alt="" />
+            <div class="gallery-hero" aria-hidden="false">
+              <div class="viewer-image-slot" id="modalImageSlot">
+                <img id="modalViewerImage" src="" alt="" />
+              </div>
+              <video id="modalViewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
+              <button id="modalVideoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
+                <span class="material-icons" aria-hidden="true">play_arrow</span>
+              </button>
+              <div class="gallery-badges" aria-label="Badges sản phẩm">
+                <span class="badge">100% ảnh tự chụp</span>
+                <span class="badge">Handmade in Vietnam</span>
+                <span class="badge">Bảo hành 1 đổi 1</span>
+              </div>
+              <button id="modalPrevBtn" class="viewer-nav prev" type="button" aria-label="Ảnh trước">
+                <span class="material-icons" aria-hidden="true">chevron_left</span>
+              </button>
+              <button id="modalNextBtn" class="viewer-nav next" type="button" aria-label="Ảnh sau">
+                <span class="material-icons" aria-hidden="true">chevron_right</span>
+              </button>
             </div>
-            <video id="modalViewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
-            <button id="modalVideoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
-              <span class="material-icons" aria-hidden="true">play_arrow</span>
-            </button>
           </div>
           <div id="modalThumbs" class="detail-thumbs"></div>
         </div>
