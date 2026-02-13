@@ -62,7 +62,7 @@ function createProductSlug(value) {
 }
 
 function getBasePathFromCurrentPage() {
-  const noProductPage = location.pathname.replace(/\/product\.html$/i, "");
+  const noProductPage = location.pathname.replace(/\/product(?:\.html)?\/?$/i, "");
   const prettyMatch = noProductPage.match(/^(.*)\/san-pham\/[^/]+\/?$/i);
   const base = prettyMatch ? prettyMatch[1] : noProductPage;
   return base.replace(/\/$/, "");
