@@ -294,11 +294,27 @@
                 }).catch(function (err) {
                   if (videoOverlay) videoOverlay.classList.remove("hidden");
                   if (typeof console !== "undefined" && console.log) console.log("Autoplay blocked:", err);
-                  document.body.addEventListener("click", function () { viewerVideo.play(); }, { once: true });
+                  var retry = function () {
+                    viewerVideo.play().then(function () { if (videoOverlay) videoOverlay.classList.add("hidden"); }).catch(function () {});
+                  };
+                  document.body.addEventListener("click", retry, { once: true, capture: true });
+                  document.body.addEventListener("touchend", retry, { once: true, capture: true });
                 });
               };
               if (videoOverlay) videoOverlay.onclick = function () { tryLoad(); };
               if (fromUser) tryLoad();
+              if (!window.__inlineVideoInteractionBound) {
+                window.__inlineVideoInteractionBound = true;
+                var fired = false;
+                var h = function () {
+                  if (fired) return;
+                  if (!viewerVideo || viewerVideo.classList.contains("hidden")) return;
+                  fired = true;
+                  tryLoad();
+                };
+                document.body.addEventListener("click", h, { once: true, capture: true });
+                document.body.addEventListener("touchend", h, { once: true, capture: true });
+              }
             }
           } else {
             var fb = document.getElementById("videoFallback");
@@ -341,7 +357,6 @@
           }
           btn.addEventListener("click", function (ev) {
             ev.preventDefault();
-            ev.stopPropagation();
             var j = parseInt(this.dataset.index, 10);
             if (!isNaN(j)) setActive(j, true);
           });

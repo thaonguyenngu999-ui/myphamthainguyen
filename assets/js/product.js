@@ -260,7 +260,7 @@ function renderViewerByIndex(index) {
     const posterUrl = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
     viewerVideo.poster = posterUrl;
     viewerVideo.setAttribute("data-video-src", mediaItem.url || "");
-    if (mediaItem.url) { viewerVideo.src = mediaItem.url; viewerVideo.load(); }
+    viewerVideo.removeAttribute("src");
     viewerVideo.muted = true;
     viewerVideo.loop = true;
     viewerVideo.playsInline = true;
@@ -292,7 +292,7 @@ function renderViewerByIndex(index) {
     const tryLoadAndPlay = () => {
       const src = viewerVideo.getAttribute("data-video-src");
       if (!src) return;
-      if (!viewerVideo.src) { viewerVideo.src = src; viewerVideo.load(); }
+      if (!viewerVideo.src || viewerVideo.src !== src) { viewerVideo.src = src; viewerVideo.load(); }
       videoLoadTimeoutId = setTimeout(showFallback, VIDEO_LOAD_TIMEOUT);
       autoplayBlockedWaiting = false;
       viewerVideo.currentTime = 0;
@@ -305,12 +305,32 @@ function renderViewerByIndex(index) {
           videoPlayOverlay?.classList.remove("hidden");
           autoplayBlockedWaiting = true;
           if (typeof console !== "undefined" && console.log) console.log("Autoplay blocked:", err);
-          document.body.addEventListener("click", () => { viewerVideo.play(); }, { once: true });
+          const retry = () => {
+            viewerVideo.play()
+              .then(() => videoPlayOverlay?.classList.add("hidden"))
+              .catch(() => {});
+          };
+          document.body.addEventListener("click", retry, { once: true, capture: true });
+          document.body.addEventListener("touchend", retry, { once: true, capture: true });
         });
     };
     pendingVideoLoad = tryLoadAndPlay;
     viewerVideo.onerror = showFallback;
     viewerVideo.oncanplay = () => { if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; } };
+    const bindFirstInteractionRetry = () => {
+      if (interactionListenerBound) return;
+      interactionListenerBound = true;
+      let fired = false;
+      const handler = () => {
+        if (fired) return;
+        if (currentMediaList[currentMediaIndex]?.type !== "video") return;
+        fired = true;
+        if (typeof pendingVideoLoad === "function") pendingVideoLoad();
+      };
+      document.body.addEventListener("click", handler, { once: true, capture: true });
+      document.body.addEventListener("touchend", handler, { once: true, capture: true });
+    };
+    bindFirstInteractionRetry();
     if (!videoObserver && detailViewer) {
       videoObserver = new IntersectionObserver((entries) => {
         entries.forEach((e) => {
@@ -382,6 +402,7 @@ function showPrevMedia() {
 }
 
 function renderMediaGallery(product) {
+  interactionListenerBound = false;
   const mediaList = getMediaList(product);
   currentMediaList = mediaList;
   currentMediaIndex = 0;
@@ -409,8 +430,6 @@ function renderMediaGallery(product) {
 
     btn.addEventListener("click", function (ev) {
       ev.preventDefault();
-      ev.stopPropagation();
-      ev.stopImmediatePropagation();
       const btnEl = ev.currentTarget;
       const i = parseInt(btnEl.getAttribute("data-index"), 10);
       if (!Number.isNaN(i) && i >= 0 && i < mediaList.length) {

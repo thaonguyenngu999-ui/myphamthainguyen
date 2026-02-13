@@ -74,6 +74,7 @@ let searchTimer = null;
 let activeModalProduct = null;
 let modalMediaList = [];
 let modalMediaIndex = 0;
+let modalInteractionBound = false;
 let promoSlides = [];
 let promoIndex = 0;
 let promoTimer = null;
@@ -710,6 +711,7 @@ function closeModal() {
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
+  modalInteractionBound = false;
   modalViewerVideo.pause();
   modalViewerVideo.classList.add("hidden");
   modalViewerVideo.src = "";
@@ -788,18 +790,40 @@ function renderModalViewerByIndex(index) {
         modalViewerVideo.load();
       }
       modalVideoTimeout = setTimeout(showModalFallback, 5000);
+      modalViewerVideo.currentTime = 0;
       modalViewerVideo.play()
         .then(() => {
           if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; }
           modalVideoPlayOverlay?.classList.add("hidden");
         })
-        .catch(() => {
+        .catch((err) => {
           modalVideoPlayOverlay?.classList.remove("hidden");
-          if (typeof console !== "undefined" && console.log) console.log("Modal autoplay blocked");
+          if (typeof console !== "undefined" && console.log) console.log("Modal autoplay blocked:", err);
+          const retry = () => {
+            modalViewerVideo.play()
+              .then(() => modalVideoPlayOverlay?.classList.add("hidden"))
+              .catch(() => {});
+          };
+          document.body.addEventListener("click", retry, { once: true, capture: true });
+          document.body.addEventListener("touchend", retry, { once: true, capture: true });
         });
     };
     modalViewerVideo.onerror = showModalFallback;
     modalViewerVideo.oncanplay = () => { if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; } };
+    const bindModalFirstInteraction = () => {
+      if (modalInteractionBound) return;
+      modalInteractionBound = true;
+      let fired = false;
+      const handler = () => {
+        if (fired) return;
+        if (modalMediaList[modalMediaIndex]?.type !== "video") return;
+        fired = true;
+        tryModalLoad();
+      };
+      document.body.addEventListener("click", handler, { once: true, capture: true });
+      document.body.addEventListener("touchend", handler, { once: true, capture: true });
+    };
+    bindModalFirstInteraction();
     if (modalMediaIndex === index) tryModalLoad();
     return;
   }
