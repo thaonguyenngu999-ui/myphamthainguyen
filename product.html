@@ -112,5 +112,118 @@
 
   <script id="productJsonLd" type="application/ld+json">{}</script>
   <script src="assets/js/product.js?v=20260216" defer></script>
+  <script>
+    (function productInlineFallback() {
+      function slugify(value) {
+        return String(value || "")
+          .replaceAll("đ", "d")
+          .replaceAll("Đ", "d")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+      }
+      function createProductSlug(value) {
+        const base = slugify(value).slice(0, 60).replace(/-+$/g, "");
+        return base || "san-pham";
+      }
+      function formatVnd(value) {
+        return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(value) || 0);
+      }
+      function getRouteSlug() {
+        const params = new URLSearchParams(location.search);
+        const querySlug = createProductSlug(params.get("slug") || "");
+        const pathMatch = location.pathname.match(/\/san-pham\/([^/?#]+)/i);
+        const pathSlug = pathMatch ? createProductSlug(decodeURIComponent(pathMatch[1] || "").replace(/\.html$/i, "")) : "";
+        return pathSlug || querySlug;
+      }
+      function normalizeProduct(item) {
+        return {
+          id: String(item.id || ""),
+          slug: createProductSlug(item.slug || item.name || item.id || ""),
+          name: String(item.name || "Sản phẩm"),
+          image: String(item.image || (Array.isArray(item.images) && item.images[0]) || "https://placehold.co/600x600?text=My+Pham"),
+          currentPrice: Number(item.currentPrice) || 0,
+          oldPrice: Number(item.oldPrice) || 0,
+          discount: Number(item.discount) || 0,
+          affiliateLink: String(item.affiliateLink || "#"),
+          description: String(item.description || "Đang cập nhật mô tả sản phẩm.")
+        };
+      }
+      function shouldRunFallback() {
+        const nameEl = document.getElementById("productName");
+        if (!nameEl) return false;
+        const name = String(nameEl.textContent || "").trim().toLowerCase();
+        return !name || name === "ten san pham" || name.includes("không tìm thấy");
+      }
+      async function fetchProducts() {
+        const candidates = [
+          "/assets/data/products.json",
+          "assets/data/products.json",
+          "https://raw.githubusercontent.com/thaonguyenngu999-ui/myphamthainguyen/main/assets/data/products.json"
+        ];
+        for (const url of candidates) {
+          try {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (Array.isArray(data)) return data.map(normalizeProduct);
+          } catch {
+            // next source
+          }
+        }
+        return [];
+      }
+      function renderNotFound() {
+        const nameEl = document.getElementById("productName");
+        const descEl = document.getElementById("productDescription");
+        if (nameEl) nameEl.textContent = "Không tìm thấy sản phẩm";
+        if (descEl) descEl.textContent = "Sản phẩm không tồn tại hoặc đã bị xóa.";
+      }
+      function renderProduct(product) {
+        const nameEl = document.getElementById("productName");
+        const imageEl = document.getElementById("viewerImage");
+        const currentEl = document.getElementById("productCurrentPrice");
+        const oldEl = document.getElementById("productOldPrice");
+        const discountEl = document.getElementById("productDiscount");
+        const descEl = document.getElementById("productDescription");
+        const detailEl = document.getElementById("productDetails");
+        const buyBtn = document.getElementById("buyNowBtn");
+        if (nameEl) nameEl.textContent = product.name;
+        if (imageEl) {
+          imageEl.src = product.image;
+          imageEl.alt = product.name;
+        }
+        if (currentEl) currentEl.textContent = formatVnd(product.currentPrice);
+        if (oldEl) oldEl.textContent = product.oldPrice ? formatVnd(product.oldPrice) : "";
+        if (discountEl) discountEl.textContent = product.discount ? `-${product.discount}%` : "";
+        if (descEl) descEl.textContent = product.description;
+        if (detailEl) detailEl.textContent = product.description;
+        if (buyBtn) {
+          buyBtn.onclick = function () {
+            window.open(product.affiliateLink, "_blank", "noopener");
+          };
+        }
+      }
+      async function run() {
+        if (!shouldRunFallback()) return;
+        const slug = getRouteSlug();
+        const id = String(new URLSearchParams(location.search).get("id") || "");
+        const products = await fetchProducts();
+        const product = products.find((item) => (
+          (slug && item.slug === slug) ||
+          (id && item.id === id) ||
+          (slug && (item.slug.startsWith(slug) || slug.startsWith(item.slug)))
+        ));
+        if (!product) {
+          renderNotFound();
+          return;
+        }
+        renderProduct(product);
+      }
+      window.setTimeout(run, 700);
+    }());
+  </script>
 </body>
 </html>
