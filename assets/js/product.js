@@ -353,21 +353,40 @@ function bindMediaNavigation() {
     pointerStartX = null;
   });
 
+  let touchStartTime = 0;
+  let isSwiping = false;
   detailViewer?.addEventListener("touchstart", (event) => {
     const touch = event.touches?.[0];
     if (!touch) return;
     pointerStartX = touch.clientX;
+    touchStartTime = Date.now();
+    isSwiping = false;
   }, { passive: true });
+
+  detailViewer?.addEventListener("touchmove", (event) => {
+    if (pointerStartX === null) return;
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    const deltaX = Math.abs(touch.clientX - pointerStartX);
+    const deltaY = Math.abs(touch.clientY - (event.touches?.[0]?.clientY || 0));
+    if (deltaX > 10 && deltaX > deltaY * 1.5) {
+      isSwiping = true;
+      event.preventDefault();
+    }
+  }, { passive: false });
 
   detailViewer?.addEventListener("touchend", (event) => {
     const touch = event.changedTouches?.[0];
     if (!touch || pointerStartX === null) return;
     const delta = touch.clientX - pointerStartX;
-    if (Math.abs(delta) > 45) {
+    const duration = Date.now() - touchStartTime;
+    if (isSwiping && Math.abs(delta) > 45 && duration < 500) {
       if (delta < 0) showNextMedia();
       else showPrevMedia();
     }
     pointerStartX = null;
+    touchStartTime = 0;
+    isSwiping = false;
   }, { passive: true });
 
   document.addEventListener("keydown", (event) => {

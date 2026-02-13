@@ -817,16 +817,41 @@ function renderModalMedia(product) {
   if (gallery && !gallery.dataset.swipeBound) {
     gallery.dataset.swipeBound = "1";
     let touchStartX = 0;
-    gallery.addEventListener("touchstart", (e) => { touchStartX = e.touches?.[0]?.clientX || 0; }, { passive: true });
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isSwiping = false;
+    gallery.addEventListener("touchstart", (e) => {
+      const touch = e.touches?.[0];
+      if (!touch) return;
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartTime = Date.now();
+      isSwiping = false;
+    }, { passive: true });
+    gallery.addEventListener("touchmove", (e) => {
+      if (touchStartX === 0) return;
+      const touch = e.touches?.[0];
+      if (!touch) return;
+      const deltaX = Math.abs(touch.clientX - touchStartX);
+      const deltaY = Math.abs(touch.clientY - touchStartY);
+      if (deltaX > 10 && deltaX > deltaY * 1.5) {
+        isSwiping = true;
+        e.preventDefault();
+      }
+    }, { passive: false });
     gallery.addEventListener("touchend", (e) => {
       const touch = e.changedTouches?.[0];
       if (!touch || touchStartX === 0) return;
       const delta = touch.clientX - touchStartX;
-      if (Math.abs(delta) > 50) {
+      const duration = Date.now() - touchStartTime;
+      if (isSwiping && Math.abs(delta) > 50 && duration < 500) {
         if (delta < 0) showModalMediaAt(modalMediaIndex + 1);
         else showModalMediaAt(modalMediaIndex - 1);
       }
       touchStartX = 0;
+      touchStartY = 0;
+      touchStartTime = 0;
+      isSwiping = false;
     }, { passive: true });
   }
 }
