@@ -1,5 +1,4 @@
 const STORAGE_KEY = "mypham_products";
-const DATA_URL = "assets/data/products.json";
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
 
 const viewerImage = document.getElementById("viewerImage");
@@ -67,6 +66,11 @@ function getBasePathFromCurrentPage() {
   const prettyMatch = noProductPage.match(/^(.*)\/san-pham\/[^/]+\/?$/i);
   const base = prettyMatch ? prettyMatch[1] : noProductPage;
   return base.replace(/\/$/, "");
+}
+
+function getProductsDataUrl() {
+  const base = getBasePathFromCurrentPage();
+  return `${base}/assets/data/products.json`;
 }
 
 function buildPrettyProductPath(slug) {
@@ -453,7 +457,7 @@ async function loadProducts() {
     }
   }
   try {
-    const res = await fetch(DATA_URL);
+    const res = await fetch(getProductsDataUrl());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return Array.isArray(data) ? data.map(normalizeProduct) : [];
