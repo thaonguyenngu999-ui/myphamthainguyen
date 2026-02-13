@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đang chuyển hướng sản phẩm...</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <script>
+    (function redirectProductAlias() {
+      var query = window.location.search || "";
+      var hash = window.location.hash || "";
+      var target = "../product.html" + query + hash;
+      window.location.replace(target);
+    }());
+  </script>
+</body>
+</html>
