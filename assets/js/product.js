@@ -217,29 +217,28 @@ function renderViewerByIndex(index) {
 
   const imgEl = document.getElementById("viewerImage");
   if (mediaItem.type === "video") {
-    if (imageSlot) imageSlot.classList.add("hidden");
-    viewerVideo.classList.remove("hidden");
-    viewerVideo.muted = true;
-    viewerVideo.loop = true;
-    viewerVideo.playsInline = true;
-    viewerVideo.setAttribute("playsinline", "");
-    viewerVideo.setAttribute("muted", "");
-    viewerVideo.poster = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
-    viewerVideo.src = mediaItem.url;
+    /* Hiển thị ảnh đầu tiên làm poster, chỉ phát video khi nhấn play */
+    const posterUrl = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
+
+    /* Ẩn video, hiện ảnh poster thay thế */
+    viewerVideo.classList.add("hidden");
+    viewerVideo.pause();
+    viewerVideo.removeAttribute("src");
     viewerVideo.load();
-    viewerVideo.play()
-      .then(() => videoPlayOverlay?.classList.add("hidden"))
-      .catch(() => videoPlayOverlay?.classList.remove("hidden"));
-    viewerVideo.onerror = () => {
-      viewerVideo.classList.add("hidden");
-      viewerVideo.src = "";
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      if (imgEl) {
-        imgEl.src = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
-        imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
-      }
-      videoPlayOverlay?.classList.add("hidden");
-    };
+
+    if (imageSlot) imageSlot.classList.remove("hidden");
+    if (imgEl) {
+      imgEl.src = posterUrl;
+      imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
+      imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+    }
+
+    /* Hiện nút play overlay */
+    if (videoPlayOverlay) {
+      videoPlayOverlay.classList.remove("hidden");
+      videoPlayOverlay._pendingVideoUrl = mediaItem.url;
+      videoPlayOverlay._posterUrl = posterUrl;
+    }
     return;
   }
 
@@ -407,9 +406,50 @@ function bindMediaNavigation() {
   });
 
   videoPlayOverlay?.addEventListener("click", () => {
+    const videoUrl = videoPlayOverlay._pendingVideoUrl;
+    const posterUrl = videoPlayOverlay._posterUrl || "";
+    if (!videoUrl) return;
+
+    const imageSlot = document.getElementById("viewerImageSlot");
+    const imgEl = document.getElementById("viewerImage");
+
+    /* Ẩn ảnh poster, hiện video */
+    if (imageSlot) imageSlot.classList.add("hidden");
+    viewerVideo.classList.remove("hidden");
+    viewerVideo.muted = true;
+    viewerVideo.loop = true;
+    viewerVideo.playsInline = true;
+    viewerVideo.setAttribute("playsinline", "");
+    viewerVideo.setAttribute("muted", "");
+    if (posterUrl) viewerVideo.poster = posterUrl;
+    viewerVideo.src = videoUrl;
+    viewerVideo.load();
     viewerVideo.play()
       .then(() => videoPlayOverlay.classList.add("hidden"))
-      .catch(() => {});
+      .catch(() => {
+        /* Video không phát được → fallback về ảnh */
+        viewerVideo.classList.add("hidden");
+        viewerVideo.removeAttribute("src");
+        viewerVideo.load();
+        if (imageSlot) imageSlot.classList.remove("hidden");
+        if (imgEl) {
+          imgEl.src = posterUrl || FALLBACK_IMAGE;
+          imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+        }
+        videoPlayOverlay.classList.add("hidden");
+      });
+
+    viewerVideo.onerror = () => {
+      viewerVideo.classList.add("hidden");
+      viewerVideo.removeAttribute("src");
+      viewerVideo.load();
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imgEl) {
+        imgEl.src = posterUrl || FALLBACK_IMAGE;
+        imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+      }
+      videoPlayOverlay.classList.add("hidden");
+    };
   });
 }
 
