@@ -451,10 +451,39 @@ function bindMediaNavigation() {
 
   videoPlayOverlay?.addEventListener("click", () => {
     const videoUrl = videoPlayOverlay._pendingVideoUrl;
+    const posterOriginalUrl = videoPlayOverlay._posterUrl || "";
     if (!videoUrl) return;
 
-    /* Video Shopee bị chặn CORS khi embed → mở trong tab mới */
-    window.open(videoUrl, "_blank", "noopener");
+    const imageSlot = document.getElementById("viewerImageSlot");
+    const imgEl = document.getElementById("viewerImage");
+
+    function fallbackToImage() {
+      viewerVideo.pause();
+      viewerVideo.src = "";
+      viewerVideo.classList.add("hidden");
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imgEl) {
+        imgEl.onerror = function () { this.onerror = null; this.src = FALLBACK_IMAGE; };
+        imgEl.src = proxyImageUrl(posterOriginalUrl || FALLBACK_IMAGE, 0);
+      }
+      videoPlayOverlay.classList.add("hidden");
+    }
+
+    /* Ẩn ảnh, hiện video */
+    if (imageSlot) imageSlot.classList.add("hidden");
+    viewerVideo.classList.remove("hidden");
+    viewerVideo.muted = true;
+    viewerVideo.loop = true;
+    viewerVideo.playsInline = true;
+    viewerVideo.setAttribute("playsinline", "");
+    viewerVideo.setAttribute("muted", "");
+    viewerVideo.poster = proxyImageUrl(posterOriginalUrl, 0);
+    viewerVideo.src = videoUrl;
+    viewerVideo.load();
+    viewerVideo.play()
+      .then(() => videoPlayOverlay.classList.add("hidden"))
+      .catch(() => fallbackToImage());
+    viewerVideo.onerror = () => fallbackToImage();
   });
 }
 

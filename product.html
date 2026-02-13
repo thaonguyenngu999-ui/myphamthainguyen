@@ -309,6 +309,41 @@
           });
         }
         setActive(0);
+
+        /* Click play → phát video */
+        if (videoOverlay) {
+          videoOverlay.addEventListener("click", function () {
+            var vUrl = videoOverlay._pendingVideoUrl;
+            var pUrl = videoOverlay._posterUrl || "";
+            if (!vUrl) return;
+            imageSlot.classList.add("hidden");
+            if (viewerVideo) {
+              viewerVideo.classList.remove("hidden");
+              viewerVideo.muted = true;
+              viewerVideo.loop = true;
+              viewerVideo.playsInline = true;
+              viewerVideo.setAttribute("playsinline", "");
+              viewerVideo.setAttribute("muted", "");
+              viewerVideo.poster = pUrl;
+              viewerVideo.src = vUrl;
+              viewerVideo.load();
+              viewerVideo.play().then(function () {
+                videoOverlay.classList.add("hidden");
+              }).catch(function () {
+                viewerVideo.classList.add("hidden");
+                viewerVideo.src = "";
+                imageSlot.classList.remove("hidden");
+                videoOverlay.classList.add("hidden");
+              });
+              viewerVideo.onerror = function () {
+                viewerVideo.classList.add("hidden");
+                viewerVideo.src = "";
+                imageSlot.classList.remove("hidden");
+                videoOverlay.classList.add("hidden");
+              };
+            }
+          });
+        }
       }
 
       function renderProduct(product) {
