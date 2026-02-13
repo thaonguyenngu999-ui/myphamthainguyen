@@ -78,7 +78,29 @@ function buildPrettyProductPath(slug) {
 function getSlugFromPath() {
   const match = location.pathname.match(/\/san-pham\/([^/?#]+)/i);
   if (!match) return "";
-  return decodeURIComponent(match[1] || "").trim();
+  return decodeURIComponent(match[1] || "")
+    .replace(/\.html$/i, "")
+    .trim();
+}
+
+function findProductByRoute(products, targetSlug = "", idFromQuery = "") {
+  if (!Array.isArray(products) || !products.length) return null;
+  const normalizedTargetSlug = createProductSlug(targetSlug);
+  if (normalizedTargetSlug) {
+    const exactBySlug = products.find((item) => item.slug === normalizedTargetSlug);
+    if (exactBySlug) return exactBySlug;
+  }
+  if (idFromQuery) {
+    const byId = products.find((item) => String(item.id) === String(idFromQuery));
+    if (byId) return byId;
+  }
+  if (normalizedTargetSlug) {
+    const fuzzyBySlug = products.find((item) => (
+      item.slug.startsWith(normalizedTargetSlug) || normalizedTargetSlug.startsWith(item.slug)
+    ));
+    if (fuzzyBySlug) return fuzzyBySlug;
+  }
+  return null;
 }
 
 function estimateSold(id) {
@@ -450,11 +472,7 @@ async function init() {
 
   try {
     const products = await loadProducts();
-    const product = products.find((item) => {
-      if (targetSlug && item.slug === targetSlug) return true;
-      if (idFromQuery && String(item.id) === String(idFromQuery)) return true;
-      return false;
-    });
+    const product = findProductByRoute(products, targetSlug, idFromQuery);
     if (!product) {
       renderNotFound();
       return;
