@@ -753,7 +753,9 @@ function renderModalViewerByIndex(index) {
 
 function showModalMediaAt(index) {
   if (!modalMediaList.length) return;
-  modalMediaIndex = (index + modalMediaList.length) % modalMediaList.length;
+  const next = (index + modalMediaList.length) % modalMediaList.length;
+  if (next === modalMediaIndex) return;
+  modalMediaIndex = next;
   renderModalViewerByIndex(modalMediaIndex);
   modalThumbs.querySelectorAll(".thumb-item").forEach((el, i) => {
     el.classList.toggle("active", i === modalMediaIndex);
@@ -779,7 +781,7 @@ function renderModalMedia(product) {
       btn.classList.add("thumb-video");
     } else {
       const altThumb = `${activeModalProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
-      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" />`;
+      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" referrerpolicy="no-referrer" />`;
     }
 
     btn.addEventListener("click", (e) => {

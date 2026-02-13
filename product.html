@@ -46,8 +46,8 @@
         <div class="detail-media gallery-wrap">
           <div class="detail-viewer product-gallery" id="productGallery">
             <div class="gallery-hero" aria-hidden="false">
-              <div class="viewer-image-slot" id="viewerImageSlot">
-                <img id="viewerImage" src="" alt="" />
+            <div class="viewer-image-slot" id="viewerImageSlot">
+              <img id="viewerImage" src="" alt="" referrerpolicy="no-referrer" />
               </div>
               <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
               <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
@@ -224,7 +224,9 @@
         if (nextBtn) nextBtn.classList.toggle("hidden", !showNav);
         viewerThumbs.classList.toggle("hidden", mediaList.length <= 1);
         function setActive(i) {
-          idx = (i + mediaList.length) % mediaList.length;
+          var nextIdx = (i + mediaList.length) % mediaList.length;
+          if (nextIdx === idx) return;
+          idx = nextIdx;
           mediaList.forEach(function (m, j) {
             var t = viewerThumbs.children[j];
             if (t) t.classList.toggle("active", j === idx);
@@ -280,7 +282,7 @@
             btn.innerHTML = "<span class=\"thumb-video-icon\">&#9654;</span><span class=\"thumb-video-text\">Video</span>";
           } else {
             var altThumb = (product.name || "San pham") + " - anh " + (i + 1);
-            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" tabindex=\"-1\" />";
+            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" tabindex=\"-1\" referrerpolicy=\"no-referrer\" />";
           }
           btn.addEventListener("click", function (ev) {
             ev.preventDefault();

@@ -237,7 +237,7 @@ function renderViewerByIndex(index) {
   videoPlayOverlay?.classList.add("hidden");
 
   const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
-  const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
+  const bust = url.indexOf("?") >= 0 ? url + "&_=" + Date.now() : url + "?_=" + Date.now();
   const altBase = activeProduct?.name || "Ảnh sản phẩm";
   const altText = `${altBase} - ảnh ${currentMediaIndex + 1}/${currentMediaList.length}`;
   if (imgEl) {
@@ -258,6 +258,7 @@ function setActiveThumb(index) {
 function showMediaAt(index) {
   if (!currentMediaList.length) return;
   const normalizedIndex = (index + currentMediaList.length) % currentMediaList.length;
+  if (normalizedIndex === currentMediaIndex) return;
   currentMediaIndex = normalizedIndex;
   renderViewerByIndex(normalizedIndex);
   setActiveThumb(normalizedIndex);
@@ -293,7 +294,7 @@ function renderMediaGallery(product) {
       btn.innerHTML = `<span class="thumb-video-icon">▶</span><span class="thumb-video-text">Video</span>`;
     } else {
       const altThumb = `${activeProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
-      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" />`;
+      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" referrerpolicy="no-referrer" />`;
     }
 
     btn.addEventListener("click", function (ev) {
