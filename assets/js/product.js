@@ -230,17 +230,18 @@ function renderViewer(mediaItem) {
   videoPlayOverlay?.classList.add("hidden");
   const slot = document.getElementById("viewerImageSlot");
   if (!slot) return;
-  const url = mediaItem.url || FALLBACK_IMAGE;
+  const baseUrl = mediaItem.url || FALLBACK_IMAGE;
   const img = document.createElement("img");
   img.id = "viewerImage";
   img.alt = activeProduct?.name || "Ảnh sản phẩm";
-  img.src = url;
+  img.loading = "eager";
   img.onerror = function () {
     this.onerror = null;
     this.src = FALLBACK_IMAGE;
   };
   slot.innerHTML = "";
   slot.appendChild(img);
+  img.src = baseUrl + (baseUrl.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
 }
 
 function setActiveThumb(index) {

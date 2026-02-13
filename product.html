@@ -111,7 +111,7 @@
   </nav>
 
   <script id="productJsonLd" type="application/ld+json">{}</script>
-  <script src="assets/js/product.js?v=20260221" defer></script>
+  <script src="assets/js/product.js?v=20260222" defer></script>
   <script>
     (function productInlineFallback() {
       function slugify(value) {
@@ -250,9 +250,10 @@
               if (videoOverlay) videoOverlay.classList.add("hidden");
             }
             imageSlot.classList.remove("hidden");
+            var url = (item.url || FALLBACK_IMG) + ((item.url || "").indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
             var img = document.createElement("img");
             img.id = "viewerImage";
-            img.src = item.url || FALLBACK_IMG;
+            img.src = url;
             img.alt = product.name;
             img.onerror = function () {
               this.onerror = null;
