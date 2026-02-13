@@ -217,37 +217,25 @@ function renderViewerByIndex(index) {
       .catch(() => videoPlayOverlay?.classList.remove("hidden"));
     viewerVideo.onerror = () => {
       viewerVideo.classList.add("hidden");
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      const img = document.getElementById("viewerImage");
-      if (img) img.src = FALLBACK_IMAGE;
+      if (imageSlot) {
+        imageSlot.classList.remove("hidden");
+        imageSlot.style.backgroundImage = `url("${FALLBACK_IMAGE}")`;
+      }
       videoPlayOverlay?.classList.add("hidden");
     };
     return;
   }
 
-  if (imageSlot) imageSlot.classList.remove("hidden");
+  if (imageSlot) {
+    imageSlot.classList.remove("hidden");
+    const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
+    const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
+    imageSlot.style.backgroundImage = `url("${bust.replace(/"/g, "%22")}")`;
+  }
   viewerVideo.pause();
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
   videoPlayOverlay?.classList.add("hidden");
-  const slot = document.getElementById("viewerImageSlot");
-  if (!slot) return;
-  const baseUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
-  const img = document.createElement("img");
-  img.id = "viewerImage";
-  img.alt = activeProduct?.name || "Ảnh sản phẩm";
-  img.loading = "eager";
-  img.decoding = "async";
-  img.onerror = function () {
-    this.onerror = null;
-    this.src = FALLBACK_IMAGE;
-  };
-  slot.innerHTML = "";
-  slot.appendChild(img);
-  const url = baseUrl + (baseUrl.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
-  requestAnimationFrame(function () {
-    img.src = url;
-  });
 }
 
 function setActiveThumb(index) {
@@ -482,12 +470,8 @@ function renderNotFound() {
   viewerThumbs.innerHTML = "";
   const slot = document.getElementById("viewerImageSlot");
   if (slot) {
-    const img = document.createElement("img");
-    img.id = "viewerImage";
-    img.src = FALLBACK_IMAGE;
-    img.alt = "Không tìm thấy";
-    slot.innerHTML = "";
-    slot.appendChild(img);
+    slot.classList.remove("hidden");
+    slot.style.backgroundImage = `url("${FALLBACK_IMAGE}")`;
   }
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";

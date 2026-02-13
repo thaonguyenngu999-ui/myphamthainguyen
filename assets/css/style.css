@@ -453,6 +453,11 @@ body {
   background: #fff;
   position: relative;
 }
+.viewer-image-slot.viewer-bg-image {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 .viewer-image-slot img {
   width: 100%;
   height: 100%;
