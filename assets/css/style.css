@@ -452,6 +452,7 @@ body {
   max-width: 600px;
   margin: 0 auto;
   aspect-ratio: 1 / 1;
+  min-height: 200px;
   background: #fff;
   position: relative;
   border-radius: 8px;

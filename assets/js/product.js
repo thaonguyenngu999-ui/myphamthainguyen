@@ -6,7 +6,6 @@ const REMOTE_PRODUCTS_FALLBACK_URLS = [
   "https://cdn.jsdelivr.net/gh/thaonguyenngu999-ui/myphamthainguyen@main/assets/data/products.json"
 ].filter(Boolean);
 
-const viewerImage = document.getElementById("viewerImage");
 const viewerVideo = document.getElementById("viewerVideo");
 const videoPlayOverlay = document.getElementById("videoPlayOverlay");
 const viewerThumbs = document.getElementById("viewerThumbs");
@@ -255,7 +254,9 @@ function renderViewerByIndex(index) {
 }
 
 function setActiveThumb(index) {
-  viewerThumbs.querySelectorAll(".thumb-item").forEach((el, idx) => {
+  const thumbs = document.getElementById("viewerThumbs");
+  if (!thumbs) return;
+  thumbs.querySelectorAll(".thumb-item").forEach((el, idx) => {
     el.classList.toggle("active", idx === index);
   });
 }
@@ -280,7 +281,9 @@ function renderMediaGallery(product) {
   const mediaList = getMediaList(product);
   currentMediaList = mediaList;
   currentMediaIndex = 0;
-  viewerThumbs.innerHTML = "";
+  const thumbsEl = document.getElementById("viewerThumbs");
+  if (!thumbsEl) return;
+  thumbsEl.innerHTML = "";
   renderViewerByIndex(0);
 
   mediaList.forEach((item, index) => {
@@ -308,7 +311,7 @@ function renderMediaGallery(product) {
       }
     });
 
-    viewerThumbs.appendChild(btn);
+    thumbsEl.appendChild(btn);
   });
 }
 
@@ -483,7 +486,8 @@ function renderNotFound() {
   productDescriptionEl.textContent = "Sản phẩm không tồn tại hoặc đã bị xóa.";
   productDetailsEl.textContent = "Vui lòng quay lại trang chủ để chọn sản phẩm khác.";
   buyNowBtn.classList.add("hidden");
-  viewerThumbs.innerHTML = "";
+  const thumbs = document.getElementById("viewerThumbs");
+  if (thumbs) thumbs.innerHTML = "";
   currentMediaList = [];
   const slot = document.getElementById("viewerImageSlot");
   const imgA = document.getElementById("galleryImgA");
