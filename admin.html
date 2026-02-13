@@ -92,12 +92,51 @@
     <section id="adminDashboard" class="hidden">
       <section class="admin-header">
         <h1>Bảng điều khiển sản phẩm</h1>
-        <p>Thêm / sửa / xóa sản phẩm và lưu bằng localStorage.</p>
+        <p>Thêm / sửa / xóa sản phẩm và lưu local. Muốn máy khác thấy dữ liệu mới: xuất bản lên GitHub.</p>
         <div class="admin-actions">
           <button id="exportBtn" class="btn-outline">Export JSON</button>
           <button id="importBtn" class="btn-outline">Import JSON</button>
           <button id="logoutBtn" class="btn-outline">Đăng xuất</button>
           <input id="importFileInput" type="file" accept=".json,application/json" hidden />
+        </div>
+      </section>
+
+      <section class="admin-publish-wrap">
+        <h2>Xuất bản đa máy (GitHub)</h2>
+        <p class="admin-publish-note">Token chỉ dùng cho lần bấm này, không lưu vào localStorage.</p>
+        <div class="form-grid admin-publish-grid">
+          <div class="form-group">
+            <label for="githubOwner">GitHub Owner *</label>
+            <input id="githubOwner" type="text" placeholder="thaonguyenngu999-ui" />
+          </div>
+          <div class="form-group">
+            <label for="githubRepo">Repository *</label>
+            <input id="githubRepo" type="text" placeholder="myphamthainguyen" />
+          </div>
+          <div class="form-group">
+            <label for="githubBranch">Branch</label>
+            <input id="githubBranch" type="text" placeholder="main" value="main" />
+          </div>
+          <div class="form-group">
+            <label for="githubProductsPath">File sản phẩm</label>
+            <input id="githubProductsPath" type="text" value="assets/data/products.json" />
+          </div>
+          <div class="form-group">
+            <label for="githubBlogsPath">File blog/faq</label>
+            <input id="githubBlogsPath" type="text" value="assets/data/blogs.json" />
+          </div>
+          <div class="form-group">
+            <label for="githubToken">Fine-grained GitHub Token *</label>
+            <input id="githubToken" type="password" placeholder="github_pat_..." autocomplete="off" />
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button id="githubPublishBtn" class="btn-primary" type="button">Xuất bản lên GitHub</button>
+          <label class="auto-publish-toggle" for="autoGithubPublish">
+            <input id="autoGithubPublish" type="checkbox" />
+            <span>Tự xuất bản sau khi lưu</span>
+          </label>
+          <small id="githubPublishStatus" class="admin-publish-status">Chưa xuất bản.</small>
         </div>
       </section>
 

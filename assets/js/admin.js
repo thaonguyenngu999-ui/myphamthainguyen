@@ -6,6 +6,8 @@ const SESSION_KEY = "mypham_admin_session";
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
 const BLOG_STORAGE_KEY = "mypham_blog_content";
 const BLOG_DATA_URL = "assets/data/blogs.json";
+const GITHUB_PUBLISH_CONFIG_KEY = "mypham_github_publish_config";
+const AUTO_GITHUB_PUBLISH_KEY = "mypham_auto_github_publish";
 
 const authGate = document.getElementById("authGate");
 const adminDashboard = document.getElementById("adminDashboard");
@@ -54,6 +56,15 @@ const resetFormBtn = document.getElementById("resetFormBtn");
 const exportBtn = document.getElementById("exportBtn");
 const importBtn = document.getElementById("importBtn");
 const importFileInput = document.getElementById("importFileInput");
+const githubOwnerInput = document.getElementById("githubOwner");
+const githubRepoInput = document.getElementById("githubRepo");
+const githubBranchInput = document.getElementById("githubBranch");
+const githubProductsPathInput = document.getElementById("githubProductsPath");
+const githubBlogsPathInput = document.getElementById("githubBlogsPath");
+const githubTokenInput = document.getElementById("githubToken");
+const githubPublishBtn = document.getElementById("githubPublishBtn");
+const githubPublishStatus = document.getElementById("githubPublishStatus");
+const autoGithubPublishInput = document.getElementById("autoGithubPublish");
 const blogPostForm = document.getElementById("blogPostForm");
 const blogPostIdInput = document.getElementById("blogPostId");
 const blogTitleInput = document.getElementById("blogTitle");
@@ -84,6 +95,7 @@ let selectedAuthRole = "admin";
 let blogContent = { posts: [], faqs: [] };
 const AFFILIATE_CLICK_KEY = "mypham_affiliate_click_logs";
 let categorySubCategoryMap = {};
+let isGithubPublishing = false;
 
 const DEFAULT_CATEGORY_SUBCATEGORY_MAP = {
   "Chăm sóc da": [
@@ -825,6 +837,184 @@ function saveBlogContent() {
   }
 }
 
+function sanitizeRepoPath(path, fallbackPath) {
+  const safe = String(path || "").trim().replace(/^\/+/, "");
+  return safe || fallbackPath;
+}
+
+function getGithubPublishConfigFromInputs() {
+  return {
+    owner: String(githubOwnerInput?.value || "").trim(),
+    repo: String(githubRepoInput?.value || "").trim(),
+    branch: String(githubBranchInput?.value || "").trim() || "main",
+    productsPath: sanitizeRepoPath(githubProductsPathInput?.value, "assets/data/products.json"),
+    blogsPath: sanitizeRepoPath(githubBlogsPathInput?.value, "assets/data/blogs.json"),
+    token: String(githubTokenInput?.value || "").trim()
+  };
+}
+
+function saveGithubPublishConfig() {
+  const cfg = getGithubPublishConfigFromInputs();
+  const withoutToken = {
+    owner: cfg.owner,
+    repo: cfg.repo,
+    branch: cfg.branch,
+    productsPath: cfg.productsPath,
+    blogsPath: cfg.blogsPath
+  };
+  localStorage.setItem(GITHUB_PUBLISH_CONFIG_KEY, JSON.stringify(withoutToken));
+}
+
+function hydrateGithubPublishConfig() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(GITHUB_PUBLISH_CONFIG_KEY) || "{}");
+    if (githubOwnerInput) githubOwnerInput.value = String(parsed.owner || githubOwnerInput.value || "").trim();
+    if (githubRepoInput) githubRepoInput.value = String(parsed.repo || githubRepoInput.value || "").trim();
+    if (githubBranchInput) githubBranchInput.value = String(parsed.branch || githubBranchInput.value || "main").trim();
+    if (githubProductsPathInput) githubProductsPathInput.value = sanitizeRepoPath(parsed.productsPath, "assets/data/products.json");
+    if (githubBlogsPathInput) githubBlogsPathInput.value = sanitizeRepoPath(parsed.blogsPath, "assets/data/blogs.json");
+  } catch {
+    // ignore invalid saved config
+  }
+}
+
+function hydrateAutoPublishSetting() {
+  const enabled = localStorage.getItem(AUTO_GITHUB_PUBLISH_KEY) === "1";
+  if (autoGithubPublishInput) autoGithubPublishInput.checked = enabled;
+}
+
+function saveAutoPublishSetting() {
+  if (!autoGithubPublishInput) return;
+  localStorage.setItem(AUTO_GITHUB_PUBLISH_KEY, autoGithubPublishInput.checked ? "1" : "0");
+}
+
+function setGithubPublishStatus(message, isError = false) {
+  if (!githubPublishStatus) return;
+  githubPublishStatus.textContent = message;
+  githubPublishStatus.style.color = isError ? "#dc2626" : "#0f766e";
+}
+
+function toBase64Utf8(value) {
+  const bytes = new TextEncoder().encode(String(value || ""));
+  let binary = "";
+  bytes.forEach((item) => {
+    binary += String.fromCharCode(item);
+  });
+  return btoa(binary);
+}
+
+function buildGithubContentApiUrl(owner, repo, path) {
+  const encodedPath = String(path || "")
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}`;
+}
+
+async function upsertGithubFile({ owner, repo, branch, token, path, content, message }) {
+  const endpoint = buildGithubContentApiUrl(owner, repo, path);
+  const headers = {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`
+  };
+
+  let sha = "";
+  const checkRes = await fetch(`${endpoint}?ref=${encodeURIComponent(branch)}`, { headers });
+  if (checkRes.ok) {
+    const checkJson = await checkRes.json();
+    sha = String(checkJson.sha || "");
+  } else if (checkRes.status !== 404) {
+    const errorJson = await checkRes.json().catch(() => ({}));
+    throw new Error(errorJson.message || `Không đọc được file ${path} (${checkRes.status}).`);
+  }
+
+  const putRes = await fetch(endpoint, {
+    method: "PUT",
+    headers: {
+      ...headers,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message,
+      branch,
+      content: toBase64Utf8(content),
+      sha: sha || undefined
+    })
+  });
+
+  if (!putRes.ok) {
+    const errorJson = await putRes.json().catch(() => ({}));
+    throw new Error(errorJson.message || `Xuất bản thất bại (${putRes.status}) với file ${path}.`);
+  }
+}
+
+async function publishToGithub(options = {}) {
+  const { silent = false, reason = "" } = options;
+  if (isGithubPublishing) {
+    if (!silent) alert("Đang có tiến trình xuất bản, vui lòng đợi xong.");
+    return;
+  }
+  const cfg = getGithubPublishConfigFromInputs();
+  if (!cfg.owner || !cfg.repo || !cfg.token) {
+    if (!silent) alert("Vui lòng nhập Owner, Repository và GitHub Token.");
+    return;
+  }
+
+  try {
+    isGithubPublishing = true;
+    githubPublishBtn.disabled = true;
+    setGithubPublishStatus(reason ? `Đang xuất bản (${reason})...` : "Đang xuất bản dữ liệu lên GitHub...");
+    saveGithubPublishConfig();
+
+    products = ensureUniqueSlugs(products.map(normalizeProduct));
+    if (!saveProductsToLocal()) {
+      throw new Error("Không lưu được dữ liệu cục bộ trước khi xuất bản.");
+    }
+    blogContent = normalizeBlogContent(blogContent);
+    if (!saveBlogContent()) {
+      throw new Error("Không lưu được dữ liệu blog cục bộ trước khi xuất bản.");
+    }
+
+    const now = new Date().toLocaleString("vi-VN");
+    await upsertGithubFile({
+      owner: cfg.owner,
+      repo: cfg.repo,
+      branch: cfg.branch,
+      token: cfg.token,
+      path: cfg.productsPath,
+      content: JSON.stringify(products, null, 2),
+      message: `publish products from admin (${now})`
+    });
+    await upsertGithubFile({
+      owner: cfg.owner,
+      repo: cfg.repo,
+      branch: cfg.branch,
+      token: cfg.token,
+      path: cfg.blogsPath,
+      content: JSON.stringify(blogContent, null, 2),
+      message: `publish blogs from admin (${now})`
+    });
+
+    githubTokenInput.value = "";
+    setGithubPublishStatus(`Xuất bản thành công lúc ${now}.`);
+    if (!silent) {
+      alert("Đã xuất bản lên GitHub. Đợi GitHub Pages build 1-2 phút, sau đó purge cache Cloudflare.");
+    }
+  } catch (error) {
+    console.error(error);
+    setGithubPublishStatus(`Lỗi: ${error.message}`, true);
+    if (!silent) alert(`Xuất bản thất bại: ${error.message}`);
+  } finally {
+    isGithubPublishing = false;
+    githubPublishBtn.disabled = false;
+  }
+}
+
+function triggerAutoPublish(reason = "auto") {
+  if (!autoGithubPublishInput?.checked) return;
+  publishToGithub({ silent: true, reason });
+}
+
 function resetBlogPostForm() {
   blogPostForm?.reset();
   if (blogPostIdInput) blogPostIdInput.value = "";
@@ -985,6 +1175,7 @@ function upsertProduct(product) {
   renderAdminList();
   renderAffiliateAnalytics();
   resetForm();
+  triggerAutoPublish("lưu sản phẩm");
 }
 
 function deleteProductById(id) {
@@ -995,6 +1186,7 @@ function deleteProductById(id) {
   refreshCategoryOptions();
   renderAdminList();
   renderAffiliateAnalytics();
+  triggerAutoPublish("xóa sản phẩm");
 }
 
 function exportJsonFile() {
@@ -1022,6 +1214,7 @@ function importJsonFile(file) {
       renderAdminList();
       renderAffiliateAnalytics();
       alert("Import JSON thanh cong.");
+      triggerAutoPublish("import sản phẩm");
     } catch (error) {
       console.error(error);
       alert("Import that bai: file JSON khong hop le.");
@@ -1203,6 +1396,8 @@ function bindDashboardEvents() {
     if (!file) return;
     importJsonFile(file);
   });
+  githubPublishBtn?.addEventListener("click", publishToGithub);
+  autoGithubPublishInput?.addEventListener("change", saveAutoPublishSetting);
 
   blogPostForm?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1229,6 +1424,7 @@ function bindDashboardEvents() {
     if (!saveBlogContent()) return;
     renderBlogManagement();
     resetBlogPostForm();
+    triggerAutoPublish("lưu bài viết");
   });
 
   faqForm?.addEventListener("submit", (event) => {
@@ -1250,6 +1446,7 @@ function bindDashboardEvents() {
     if (!saveBlogContent()) return;
     renderBlogManagement();
     resetFaqForm();
+    triggerAutoPublish("lưu FAQ");
   });
 
   resetBlogPostBtn?.addEventListener("click", resetBlogPostForm);
@@ -1279,6 +1476,7 @@ function bindDashboardEvents() {
       if (!saveBlogContent()) return;
       renderBlogManagement();
       resetBlogPostForm();
+      triggerAutoPublish("xóa bài viết");
     }
   });
 
@@ -1303,6 +1501,7 @@ function bindDashboardEvents() {
       if (!saveBlogContent()) return;
       renderBlogManagement();
       resetFaqForm();
+      triggerAutoPublish("xóa FAQ");
     }
   });
 }
@@ -1310,6 +1509,9 @@ function bindDashboardEvents() {
 async function initDashboard() {
   await loadProducts();
   await loadBlogContent();
+  hydrateGithubPublishConfig();
+  hydrateAutoPublishSetting();
+  setGithubPublishStatus("Sẵn sàng xuất bản.");
   refreshCategoryOptions();
   renderAdminList();
   renderAffiliateAnalytics();
