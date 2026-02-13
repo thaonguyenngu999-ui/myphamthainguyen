@@ -1,5 +1,18 @@
 const STORAGE_KEY = "mypham_products";
 const DATA_URL = "assets/data/products.json";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+  Pragma: "no-cache",
+  Expires: "0",
+  "If-Modified-Since": "0"
+};
+
+function cacheBust(url) {
+  if (!url || typeof url !== "string") return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return url + sep + "v=" + Date.now();
+}
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
 const IMAGE_PROXY = "https://wsrv.nl/?url=";
 
@@ -508,10 +521,15 @@ async function loadBlogContent() {
   }
 
   try {
-    const response = await fetch(BLOG_DATA_URL);
+    const response = await fetch(cacheBust(BLOG_DATA_URL), {
+      method: "GET",
+      cache: "no-store",
+      headers: NO_CACHE_HEADERS
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const parsed = await response.json();
     blogContent = normalizeBlogContent(parsed);
+    if (typeof console !== "undefined" && console.log) console.log("Fetched new blog data:", parsed);
   } catch {
     blogContent = {
       posts: [
@@ -695,7 +713,9 @@ function closeModal() {
   modalViewerVideo.pause();
   modalViewerVideo.classList.add("hidden");
   modalViewerVideo.src = "";
+  modalViewerVideo.removeAttribute("data-video-src");
   modalVideoPlayOverlay?.classList.add("hidden");
+  document.getElementById("modalVideoFallback")?.classList.add("hidden");
   activeModalProduct = null;
   modalMediaList = [];
   modalMediaIndex = 0;
@@ -723,33 +743,68 @@ function renderModalViewerByIndex(index) {
   if (nextBtn) nextBtn.classList.toggle("hidden", !showNav);
 
   if (mediaItem.type === "video") {
+    const modalVideoFallback = document.getElementById("modalVideoFallback");
+    const modalVideoFallbackLink = document.getElementById("modalVideoFallbackLink");
+    const modalVideoFallbackPoster = document.querySelector("#modalVideoFallback .video-fallback-poster");
     if (imageSlot) imageSlot.classList.add("hidden");
-    modalViewerVideo.classList.remove("hidden");
+    modalVideoFallback?.classList.add("hidden");
+    modalVideoFallbackLink?.removeAttribute("href");
+    let modalVideoTimeout = null;
+    const posterUrl = proxyImageUrl(activeModalProduct?.images?.[0] || FALLBACK_IMAGE);
+    modalViewerVideo.poster = posterUrl;
+    modalViewerVideo.setAttribute("data-video-src", mediaItem.url || "");
+    modalViewerVideo.src = "";
     modalViewerVideo.muted = true;
     modalViewerVideo.loop = true;
     modalViewerVideo.playsInline = true;
     modalViewerVideo.setAttribute("playsinline", "");
     modalViewerVideo.setAttribute("muted", "");
-    modalViewerVideo.poster = proxyImageUrl(activeModalProduct?.images?.[0] || FALLBACK_IMAGE);
-    modalViewerVideo.src = mediaItem.url;
-    modalViewerVideo.load();
-    modalViewerVideo.play()
-      .then(() => modalVideoPlayOverlay?.classList.add("hidden"))
-      .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
-    modalViewerVideo.onerror = () => {
+    modalViewerVideo.preload = "none";
+    modalViewerVideo.classList.remove("hidden");
+    modalVideoPlayOverlay?.classList.remove("hidden");
+    const showModalFallback = () => {
+      if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; }
       modalViewerVideo.classList.add("hidden");
       modalViewerVideo.src = "";
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      if (viewerImg) { viewerImg.src = FALLBACK_IMAGE; }
+      modalViewerVideo.removeAttribute("data-video-src");
       modalVideoPlayOverlay?.classList.add("hidden");
+      if (modalVideoFallback && modalVideoFallbackPoster) {
+        modalVideoFallbackPoster.src = posterUrl;
+        modalVideoFallbackPoster.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+        if (modalVideoFallbackLink && activeModalProduct?.affiliateLink) {
+          modalVideoFallbackLink.href = withAffiliateTracking(activeModalProduct.affiliateLink);
+        }
+        modalVideoFallback.classList.remove("hidden");
+      } else if (imageSlot && viewerImg) {
+        imageSlot.classList.remove("hidden");
+        viewerImg.src = posterUrl;
+      }
     };
+    const tryModalLoad = () => {
+      const src = modalViewerVideo.getAttribute("data-video-src");
+      if (!src || modalViewerVideo.src) return;
+      modalViewerVideo.src = src;
+      modalViewerVideo.load();
+      modalVideoTimeout = setTimeout(showModalFallback, 5000);
+      modalViewerVideo.play()
+        .then(() => {
+          if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; }
+          modalVideoPlayOverlay?.classList.add("hidden");
+        })
+        .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
+    };
+    modalViewerVideo.onerror = showModalFallback;
+    modalViewerVideo.oncanplay = () => { if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; } };
+    tryModalLoad();
     return;
   }
 
   if (imageSlot) imageSlot.classList.remove("hidden");
+  document.getElementById("modalVideoFallback")?.classList.add("hidden");
   modalViewerVideo.pause();
   modalViewerVideo.classList.add("hidden");
   modalViewerVideo.src = "";
+  modalViewerVideo.removeAttribute("data-video-src");
   modalVideoPlayOverlay?.classList.add("hidden");
 
   const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
@@ -1171,11 +1226,16 @@ async function loadProducts() {
     let loaded = null;
     for (const url of candidates) {
       try {
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(cacheBust(url), {
+          method: "GET",
+          cache: "no-store",
+          headers: NO_CACHE_HEADERS
+        });
         if (!res.ok) continue;
         const data = await res.json();
         if (Array.isArray(data)) {
           loaded = data;
+          if (typeof console !== "undefined" && console.log) console.log("Fetched new products data:", data.length, "items");
           break;
         }
       } catch {
@@ -1201,6 +1261,25 @@ async function loadProducts() {
   renderPromoSlides(allProducts);
   restartPromoTimer();
 }
+
+async function refreshProductsData() {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(BLOG_STORAGE_KEY);
+  const btn = document.getElementById("refreshDataBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Đang tải...";
+  }
+  await loadProducts();
+  await loadBlogContent();
+  renderBlogAndFaqSection?.();
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "Cập nhật dữ liệu mới";
+  }
+}
+
+window.refreshProductsData = refreshProductsData;
 
 function bindEvents() {
   searchInput.addEventListener("input", scheduleSearch);
@@ -1305,6 +1384,13 @@ function bindEvents() {
     modalViewerVideo.play()
       .then(() => modalVideoPlayOverlay.classList.add("hidden"))
       .catch(() => {});
+  });
+
+  const refreshBtn = document.getElementById("refresh-data") || document.getElementById("refreshDataBtn");
+  if (refreshBtn) refreshBtn.addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(BLOG_STORAGE_KEY);
+    location.reload(true);
   });
 }
 

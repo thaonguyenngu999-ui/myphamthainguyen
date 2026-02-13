@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta http-equiv="Last-Modified" content="0" />
   <title>Chi tiết sản phẩm | Mỹ Phẩm Thái Nguyên</title>
   <meta id="metaDescription" name="description" content="Chi tiết sản phẩm tại Mỹ Phẩm Thái Nguyên." />
   <meta id="ogTitle" property="og:title" content="Chi tiết sản phẩm" />
@@ -49,10 +53,14 @@
             <div class="viewer-image-slot" id="viewerImageSlot">
               <img id="viewerImage" src="https://placehold.co/600x600?text=My+Pham" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" />
               </div>
-              <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
+              <video id="viewerVideo" controls preload="none" playsinline muted loop class="hidden" data-video-src=""></video>
               <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
                 <span class="material-icons" aria-hidden="true">play_arrow</span>
               </button>
+              <div id="videoFallback" class="video-fallback hidden">
+                <img class="video-fallback-poster" src="" alt="Video sản phẩm" />
+                <a id="videoFallbackLink" class="btn-watch-shopee" href="#" target="_blank" rel="noopener">Xem video trên Shopee</a>
+              </div>
               <div class="gallery-badges" aria-label="Badges sản phẩm">
                 <span class="badge">100% ảnh tự chụp</span>
                 <span class="badge">Handmade in Vietnam</span>
@@ -186,7 +194,8 @@
         ];
         for (const url of candidates) {
           try {
-            const res = await fetch(url, { cache: "no-store" });
+            var nocache = { method: "GET", cache: "no-store", headers: { "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0", "Pragma": "no-cache", "Expires": "0", "If-Modified-Since": "0" } };
+            const res = await fetch(url + (url.includes("?") ? "&" : "?") + "v=" + Date.now(), nocache);
             if (!res.ok) continue;
             const data = await res.json();
             if (Array.isArray(data)) return data.map(normalizeProduct);
@@ -234,7 +243,12 @@
           var item = mediaList[idx];
           if (item.type === "video") {
             imageSlot.classList.add("hidden");
+            var videoFallbackEl = document.getElementById("videoFallback");
+            var videoFallbackLinkEl = document.getElementById("videoFallbackLink");
+            var videoFallbackPosterEl = videoFallbackEl && videoFallbackEl.querySelector(".video-fallback-poster");
+            if (videoFallbackEl) videoFallbackEl.classList.add("hidden");
             if (viewerVideo) {
+              viewerVideo.preload = "none";
               viewerVideo.classList.remove("hidden");
               viewerVideo.muted = true;
               viewerVideo.loop = true;
@@ -242,30 +256,46 @@
               viewerVideo.setAttribute("playsinline", "");
               viewerVideo.setAttribute("muted", "");
               var posterUrl = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-              if (posterUrl.includes("susercontent.com")) {
-                posterUrl = "https://wsrv.nl/?url=" + encodeURIComponent(posterUrl) + "&n=-1";
-              }
+              if (posterUrl.includes("susercontent.com")) posterUrl = "https://wsrv.nl/?url=" + encodeURIComponent(posterUrl) + "&n=-1";
               viewerVideo.poster = posterUrl;
-              viewerVideo.src = item.url;
-              viewerVideo.load();
-              viewerVideo.play().then(function () {
-                if (videoOverlay) videoOverlay.classList.add("hidden");
-              }).catch(function () {
-                if (videoOverlay) videoOverlay.classList.remove("hidden");
-              });
-              viewerVideo.onerror = function () {
+              viewerVideo.src = "";
+              if (videoOverlay) videoOverlay.classList.remove("hidden");
+              var videoTimeout = null;
+              var showFallback = function () {
+                if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; }
                 viewerVideo.classList.add("hidden");
                 viewerVideo.src = "";
                 if (videoOverlay) videoOverlay.classList.add("hidden");
-                imageSlot.classList.remove("hidden");
-                var fallbackImg = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-                if (fallbackImg.includes("susercontent.com")) {
-                  fallbackImg = "https://wsrv.nl/?url=" + encodeURIComponent(fallbackImg) + "&n=-1";
+                if (videoFallbackEl && videoFallbackPosterEl) {
+                  videoFallbackPosterEl.src = posterUrl;
+                  if (videoFallbackLinkEl && product.affiliateLink) videoFallbackLinkEl.href = product.affiliateLink;
+                  videoFallbackEl.classList.remove("hidden");
+                } else {
+                  imageSlot.classList.remove("hidden");
+                  viewerImg.src = posterUrl;
                 }
-                viewerImg.src = fallbackImg;
               };
+              viewerVideo.onerror = showFallback;
+              viewerVideo.oncanplay = function () { if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; } };
+              var tryLoad = function () {
+                if (viewerVideo.src) return;
+                viewerVideo.src = item.url;
+                viewerVideo.load();
+                videoTimeout = setTimeout(showFallback, 5000);
+                viewerVideo.play().then(function () {
+                  if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; }
+                  if (videoOverlay) videoOverlay.classList.add("hidden");
+                }).catch(function () { if (videoOverlay) videoOverlay.classList.remove("hidden"); });
+              };
+              var galleryRect = document.getElementById("productGallery");
+              if (galleryRect) {
+                var rect = galleryRect.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) tryLoad(); else setTimeout(function () { tryLoad(); }, 300);
+              } else tryLoad();
             }
           } else {
+            var fb = document.getElementById("videoFallback");
+            if (fb) fb.classList.add("hidden");
             if (viewerVideo) {
               viewerVideo.pause();
               viewerVideo.classList.add("hidden");

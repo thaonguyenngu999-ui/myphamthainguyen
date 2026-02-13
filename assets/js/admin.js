@@ -1,5 +1,17 @@
 const STORAGE_KEY = "mypham_products";
 const DATA_URL = "assets/data/products.json";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+  Pragma: "no-cache",
+  Expires: "0",
+  "If-Modified-Since": "0"
+};
+
+function cacheBust(url) {
+  if (!url || typeof url !== "string") return url;
+  return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+}
 const ADMIN_ACCOUNTS_KEY = "mypham_admin_accounts";
 const USER_ACCOUNTS_KEY = "mypham_user_accounts";
 const SESSION_KEY = "mypham_admin_session";
@@ -670,7 +682,7 @@ async function loadProducts() {
   }
 
   try {
-    const res = await fetch(DATA_URL);
+    const res = await fetch(cacheBust(DATA_URL), { method: "GET", cache: "no-store", headers: NO_CACHE_HEADERS });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     products = Array.isArray(data) ? ensureUniqueSlugs(data.map(normalizeProduct)) : [];
@@ -828,7 +840,7 @@ async function loadBlogContent() {
   }
 
   try {
-    const response = await fetch(BLOG_DATA_URL);
+    const response = await fetch(cacheBust(BLOG_DATA_URL), { method: "GET", cache: "no-store", headers: NO_CACHE_HEADERS });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const parsed = await response.json();
     blogContent = normalizeBlogContent(parsed);

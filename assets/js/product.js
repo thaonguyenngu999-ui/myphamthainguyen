@@ -1,4 +1,16 @@
 const STORAGE_KEY = "mypham_products";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+  Pragma: "no-cache",
+  Expires: "0",
+  "If-Modified-Since": "0"
+};
+
+function cacheBust(url) {
+  if (!url || typeof url !== "string") return url;
+  return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+}
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
 const IMAGE_PROXY = "https://wsrv.nl/?url=";
 
@@ -17,6 +29,13 @@ const REMOTE_PRODUCTS_FALLBACK_URLS = [
 
 const viewerVideo = document.getElementById("viewerVideo");
 const videoPlayOverlay = document.getElementById("videoPlayOverlay");
+const videoFallback = document.getElementById("videoFallback");
+const videoFallbackLink = document.getElementById("videoFallbackLink");
+const videoFallbackPoster = document.querySelector("#videoFallback .video-fallback-poster");
+const VIDEO_LOAD_TIMEOUT = 5000;
+let videoLoadTimeoutId = null;
+let videoObserver = null;
+let pendingVideoLoad = null;
 const viewerThumbs = document.getElementById("viewerThumbs");
 const detailViewer = document.querySelector(".detail-viewer");
 const prevMediaBtn = document.getElementById("prevMediaBtn");
@@ -218,36 +237,85 @@ function renderViewerByIndex(index) {
   const imgEl = document.getElementById("viewerImage");
   if (mediaItem.type === "video") {
     if (imageSlot) imageSlot.classList.add("hidden");
-    viewerVideo.classList.remove("hidden");
+    videoFallback?.classList.add("hidden");
+    videoFallbackLink?.removeAttribute("href");
+    if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
+    const posterUrl = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
+    viewerVideo.poster = posterUrl;
+    viewerVideo.setAttribute("data-video-src", mediaItem.url || "");
+    viewerVideo.src = "";
     viewerVideo.muted = true;
     viewerVideo.loop = true;
     viewerVideo.playsInline = true;
     viewerVideo.setAttribute("playsinline", "");
     viewerVideo.setAttribute("muted", "");
-    viewerVideo.poster = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
-    viewerVideo.src = mediaItem.url;
-    viewerVideo.load();
-    viewerVideo.play()
-      .then(() => videoPlayOverlay?.classList.add("hidden"))
-      .catch(() => videoPlayOverlay?.classList.remove("hidden"));
-    viewerVideo.onerror = () => {
+    viewerVideo.preload = "none";
+    viewerVideo.classList.remove("hidden");
+    videoPlayOverlay?.classList.remove("hidden");
+    videoPlayOverlay?.classList.remove("hidden");
+    const showFallback = () => {
+      if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
       viewerVideo.classList.add("hidden");
       viewerVideo.src = "";
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      if (imgEl) {
-        imgEl.src = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
+      viewerVideo.removeAttribute("data-video-src");
+      videoPlayOverlay?.classList.add("hidden");
+      if (videoFallback && videoFallbackPoster) {
+        videoFallbackPoster.src = posterUrl;
+        videoFallbackPoster.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+        if (videoFallbackLink && activeProduct?.affiliateLink) {
+          videoFallbackLink.href = withAffiliateTracking(activeProduct.affiliateLink);
+        }
+        videoFallback.classList.remove("hidden");
+      } else if (imageSlot && imgEl) {
+        imageSlot.classList.remove("hidden");
+        imgEl.src = posterUrl;
         imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
       }
-      videoPlayOverlay?.classList.add("hidden");
     };
+    const tryLoadAndPlay = () => {
+      const src = viewerVideo.getAttribute("data-video-src");
+      if (!src || viewerVideo.src) return;
+      viewerVideo.src = src;
+      viewerVideo.load();
+      videoLoadTimeoutId = setTimeout(showFallback, VIDEO_LOAD_TIMEOUT);
+      viewerVideo.play()
+        .then(() => {
+          if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
+          videoPlayOverlay?.classList.add("hidden");
+        })
+        .catch(() => videoPlayOverlay?.classList.remove("hidden"));
+    };
+    pendingVideoLoad = tryLoadAndPlay;
+    viewerVideo.onerror = showFallback;
+    viewerVideo.oncanplay = () => { if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; } };
+    if (!videoObserver && detailViewer) {
+      videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            if (currentMediaList[currentMediaIndex]?.type === "video" && typeof pendingVideoLoad === "function") pendingVideoLoad();
+          } else {
+            viewerVideo.pause();
+          }
+        });
+      }, { rootMargin: "50px", threshold: 0.1 });
+      videoObserver.observe(detailViewer);
+    }
+    const rect = detailViewer?.getBoundingClientRect?.();
+    if (rect && rect.top < window.innerHeight && rect.bottom > 0) {
+      tryLoadAndPlay();
+    }
     return;
   }
 
   if (imageSlot) imageSlot.classList.remove("hidden");
+  pendingVideoLoad = null;
+  if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
   viewerVideo.pause();
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
+  viewerVideo.removeAttribute("data-video-src");
   videoPlayOverlay?.classList.add("hidden");
+  videoFallback?.classList.add("hidden");
 
   const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
   const url = proxyImageUrl(rawUrl);
@@ -407,9 +475,13 @@ function bindMediaNavigation() {
   });
 
   videoPlayOverlay?.addEventListener("click", () => {
-    viewerVideo.play()
-      .then(() => videoPlayOverlay.classList.add("hidden"))
-      .catch(() => {});
+    if (viewerVideo.src) {
+      viewerVideo.play()
+        .then(() => videoPlayOverlay.classList.add("hidden"))
+        .catch(() => {});
+    } else if (typeof pendingVideoLoad === "function") {
+      pendingVideoLoad();
+    }
   });
 }
 
@@ -560,7 +632,7 @@ async function loadProducts() {
     const candidates = getProductsDataUrlCandidates();
     for (const url of candidates) {
       try {
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(cacheBust(url), { method: "GET", cache: "no-store", headers: NO_CACHE_HEADERS });
         if (!res.ok) continue;
         const data = await res.json();
         if (Array.isArray(data)) return data.map(normalizeProduct);

@@ -1,4 +1,16 @@
 const STORAGE_KEY = "mypham_products";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+  Pragma: "no-cache",
+  Expires: "0",
+  "If-Modified-Since": "0"
+};
+
+function cacheBust(url) {
+  if (!url || typeof url !== "string") return url;
+  return url + (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+}
 const BASE_PREFIX = /\/san-pham\/[^/]+\.html$/i.test(location.pathname) ? "../" : "";
 const DATA_URL = `${BASE_PREFIX}assets/data/products.json`;
 const REMOTE_PRODUCTS_FALLBACK_URLS = [
@@ -247,7 +259,7 @@ async function loadProducts() {
     const candidates = [...new Set([DATA_URL, "/assets/data/products.json", ...REMOTE_PRODUCTS_FALLBACK_URLS])];
     for (const url of candidates) {
       try {
-        const response = await fetch(url, { cache: "no-store" });
+        const response = await fetch(cacheBust(url), { method: "GET", cache: "no-store", headers: NO_CACHE_HEADERS });
         if (!response.ok) continue;
         const data = await response.json();
         if (Array.isArray(data)) {
@@ -669,7 +681,24 @@ async function init() {
   initBottomNavActive();
   initSidebarAccordion();
   bindEvents();
+  const refreshBtn = document.getElementById("refresh-data") || document.getElementById("refreshDataBtn");
+  if (refreshBtn) refreshBtn.addEventListener("click", () => { localStorage.removeItem(STORAGE_KEY); location.reload(true); });
 }
+
+async function refreshProductsData() {
+  localStorage.removeItem(STORAGE_KEY);
+  const btn = document.getElementById("refreshDataBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Đang tải..."; }
+  allProducts = await loadProducts();
+  const { keyword } = getFiltersFromUrl();
+  searchInput.value = keyword;
+  applyFilter(keyword);
+  renderCards(true);
+  updatePageSeo();
+  if (btn) { btn.disabled = false; btn.textContent = "Cập nhật dữ liệu mới"; }
+}
+
+window.refreshProductsData = refreshProductsData;
 
 init().catch((error) => {
   console.error("Không thể tải trang danh mục:", error);

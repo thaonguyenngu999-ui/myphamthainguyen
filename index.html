@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta http-equiv="Last-Modified" content="0" />
   <title>Mỹ Phẩm Thái Nguyên | Deal mỹ phẩm chính hãng giá tốt mỗi ngày</title>
   <meta name="description" content="Tổng hợp deal mỹ phẩm chính hãng: chăm sóc da, trang điểm, chống nắng, serum. So sánh giá nhanh, xem thông tin rõ ràng và mua qua link đối tác uy tín." />
   <meta name="keywords" content="mỹ phẩm thái nguyên, deal mỹ phẩm, mỹ phẩm chính hãng, chống nắng, serum, kem dưỡng, son môi, mua mỹ phẩm online" />
@@ -239,10 +243,14 @@
             <div class="viewer-image-slot" id="modalImageSlot">
               <img id="modalViewerImage" src="" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" />
               </div>
-              <video id="modalViewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
+              <video id="modalViewerVideo" controls preload="none" playsinline muted loop class="hidden" data-video-src=""></video>
               <button id="modalVideoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
                 <span class="material-icons" aria-hidden="true">play_arrow</span>
               </button>
+              <div id="modalVideoFallback" class="video-fallback hidden">
+                <img class="video-fallback-poster" src="" alt="Video sản phẩm" />
+                <a id="modalVideoFallbackLink" class="btn-watch-shopee" href="#" target="_blank" rel="noopener">Xem video trên Shopee</a>
+              </div>
               <div class="gallery-badges" aria-label="Badges sản phẩm">
                 <span class="badge">100% ảnh tự chụp</span>
                 <span class="badge">Handmade in Vietnam</span>
@@ -330,6 +338,7 @@
       <div class="footer-bottom">
         <small>© 2026 Mỹ Phẩm Thái Nguyên. Tất cả các quyền được bảo lưu.</small>
         <small>Website tổng hợp ưu đãi mỹ phẩm chính hãng, cập nhật liên tục mỗi ngày.</small>
+        <button id="refresh-data" type="button" class="btn-refresh-data" style="background:#ee4d2d;color:white;padding:10px 20px;border:none;border-radius:8px;cursor:pointer" aria-label="Cập nhật dữ liệu mới">Cập nhật dữ liệu mới</button>
       </div>
     </div>
   </footer>
