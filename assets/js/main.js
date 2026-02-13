@@ -759,7 +759,7 @@ function renderModalViewerByIndex(index) {
     modalViewerVideo.playsInline = true;
     modalViewerVideo.setAttribute("playsinline", "");
     modalViewerVideo.setAttribute("muted", "");
-    modalViewerVideo.preload = "none";
+    modalViewerVideo.preload = "metadata";
     modalViewerVideo.classList.remove("hidden");
     modalVideoPlayOverlay?.classList.remove("hidden");
     const showModalFallback = () => {
@@ -782,16 +782,21 @@ function renderModalViewerByIndex(index) {
     };
     const tryModalLoad = () => {
       const src = modalViewerVideo.getAttribute("data-video-src");
-      if (!src || modalViewerVideo.src) return;
-      modalViewerVideo.src = src;
-      modalViewerVideo.load();
+      if (!src) return;
+      if (!modalViewerVideo.src) {
+        modalViewerVideo.src = src;
+        modalViewerVideo.load();
+      }
       modalVideoTimeout = setTimeout(showModalFallback, 5000);
       modalViewerVideo.play()
         .then(() => {
           if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; }
           modalVideoPlayOverlay?.classList.add("hidden");
         })
-        .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
+        .catch(() => {
+          modalVideoPlayOverlay?.classList.remove("hidden");
+          if (typeof console !== "undefined" && console.log) console.log("Modal autoplay blocked");
+        });
     };
     modalViewerVideo.onerror = showModalFallback;
     modalViewerVideo.oncanplay = () => { if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; } };

@@ -53,7 +53,7 @@
             <div class="viewer-image-slot" id="viewerImageSlot">
               <img id="viewerImage" src="https://placehold.co/600x600?text=My+Pham" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" />
               </div>
-              <video id="viewerVideo" controls preload="none" playsinline muted loop class="hidden" data-video-src=""></video>
+              <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden" data-video-src=""></video>
               <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
                 <span class="material-icons" aria-hidden="true">play_arrow</span>
               </button>
@@ -248,7 +248,7 @@
             var videoFallbackPosterEl = videoFallbackEl && videoFallbackEl.querySelector(".video-fallback-poster");
             if (videoFallbackEl) videoFallbackEl.classList.add("hidden");
             if (viewerVideo) {
-              viewerVideo.preload = "none";
+              viewerVideo.preload = "metadata";
               viewerVideo.classList.remove("hidden");
               viewerVideo.muted = true;
               viewerVideo.loop = true;
@@ -278,20 +278,14 @@
               viewerVideo.onerror = showFallback;
               viewerVideo.oncanplay = function () { if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; } };
               var tryLoad = function () {
-                if (viewerVideo.src) return;
-                viewerVideo.src = item.url;
-                viewerVideo.load();
+                if (!viewerVideo.src) { viewerVideo.src = item.url; viewerVideo.load(); }
                 videoTimeout = setTimeout(showFallback, 5000);
                 viewerVideo.play().then(function () {
                   if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; }
                   if (videoOverlay) videoOverlay.classList.add("hidden");
                 }).catch(function () { if (videoOverlay) videoOverlay.classList.remove("hidden"); });
               };
-              var galleryRect = document.getElementById("productGallery");
-              if (galleryRect) {
-                var rect = galleryRect.getBoundingClientRect();
-                if (rect.top < window.innerHeight && rect.bottom > 0) tryLoad(); else setTimeout(function () { tryLoad(); }, 300);
-              } else tryLoad();
+              tryLoad();
             }
           } else {
             var fb = document.getElementById("videoFallback");

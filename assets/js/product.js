@@ -36,6 +36,8 @@ const VIDEO_LOAD_TIMEOUT = 5000;
 let videoLoadTimeoutId = null;
 let videoObserver = null;
 let pendingVideoLoad = null;
+let autoplayBlockedWaiting = false;
+let interactionListenerBound = false;
 const viewerThumbs = document.getElementById("viewerThumbs");
 const detailViewer = document.querySelector(".detail-viewer");
 const prevMediaBtn = document.getElementById("prevMediaBtn");
@@ -218,6 +220,21 @@ function normalizeProduct(product) {
   };
 }
 
+function bindInteractionRetryPlay() {
+  if (interactionListenerBound) return;
+  interactionListenerBound = true;
+  const handler = () => {
+    if (!autoplayBlockedWaiting) return;
+    if (currentMediaList[currentMediaIndex]?.type !== "video") return;
+    autoplayBlockedWaiting = false;
+    viewerVideo.play()
+      .then(() => videoPlayOverlay?.classList.add("hidden"))
+      .catch(() => {});
+  };
+  document.addEventListener("click", handler, { once: true, capture: true });
+  document.addEventListener("touchend", handler, { once: true, capture: true });
+}
+
 function getMediaList(product) {
   const media = (product.images || []).map((url) => ({ type: "image", url }));
   if (product.videoUrl) media.unshift({ type: "video", url: product.videoUrl });
@@ -249,7 +266,7 @@ function renderViewerByIndex(index) {
     viewerVideo.playsInline = true;
     viewerVideo.setAttribute("playsinline", "");
     viewerVideo.setAttribute("muted", "");
-    viewerVideo.preload = "none";
+    viewerVideo.preload = "metadata";
     viewerVideo.classList.remove("hidden");
     videoPlayOverlay?.classList.remove("hidden");
     videoPlayOverlay?.classList.remove("hidden");
@@ -274,16 +291,24 @@ function renderViewerByIndex(index) {
     };
     const tryLoadAndPlay = () => {
       const src = viewerVideo.getAttribute("data-video-src");
-      if (!src || viewerVideo.src) return;
-      viewerVideo.src = src;
-      viewerVideo.load();
+      if (!src) return;
+      if (!viewerVideo.src) {
+        viewerVideo.src = src;
+        viewerVideo.load();
+      }
       videoLoadTimeoutId = setTimeout(showFallback, VIDEO_LOAD_TIMEOUT);
+      autoplayBlockedWaiting = false;
       viewerVideo.play()
         .then(() => {
           if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
           videoPlayOverlay?.classList.add("hidden");
         })
-        .catch(() => videoPlayOverlay?.classList.remove("hidden"));
+        .catch(() => {
+          videoPlayOverlay?.classList.remove("hidden");
+          autoplayBlockedWaiting = true;
+          if (typeof console !== "undefined" && console.log) console.log("Autoplay blocked");
+          bindInteractionRetryPlay();
+        });
     };
     pendingVideoLoad = tryLoadAndPlay;
     viewerVideo.onerror = showFallback;
@@ -300,10 +325,7 @@ function renderViewerByIndex(index) {
       }, { rootMargin: "50px", threshold: 0.1 });
       videoObserver.observe(detailViewer);
     }
-    const rect = detailViewer?.getBoundingClientRect?.();
-    if (rect && rect.top < window.innerHeight && rect.bottom > 0) {
-      tryLoadAndPlay();
-    }
+    tryLoadAndPlay();
     return;
   }
 
@@ -474,7 +496,9 @@ function bindMediaNavigation() {
     if (event.key === "ArrowLeft") showPrevMedia();
   });
 
-  videoPlayOverlay?.addEventListener("click", () => {
+  videoPlayOverlay?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    autoplayBlockedWaiting = false;
     if (viewerVideo.src) {
       viewerVideo.play()
         .then(() => videoPlayOverlay.classList.add("hidden"))
