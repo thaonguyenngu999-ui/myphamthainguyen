@@ -1,6 +1,22 @@
 {
   "posts": [
     {
+      "id": "blog_1770977510116",
+      "title": "Tượng Phật Thích Ca Gỗ Bách – Mang Bình An Về Nhà",
+      "summary": "Tượng Phật Thích Ca gỗ Bách xanh nguyên khối, chế tác tinh xảo, phù hợp trưng bày bàn thờ, phòng thờ, góc tu tập, giúp không gian thêm thanh tịnh và an yên.",
+      "url": "https://myphamthainguyen.com/product?slug=tuong-phat-thich-ca-go-bach-xanh-am-may-decor-phong-tho-goc",
+      "tag": "Review",
+      "ctaText": "Mua ngay"
+    },
+    {
+      "id": "blog_1770975703319",
+      "title": "Nụ Trầm Hương – Ngọc Am – Bách Nguyên Chất | Khử Mùi – Thơm Phòng – Tẩy Uế",
+      "summary": "Nụ Trầm Hương, Nụ Ngọc Am, Nụ Bách 100% nguyên chất giúp thanh lọc không khí, khử mùi hiệu quả, mang hương thơm dịu nhẹ thư giãn tinh thần. Sản phẩm từ gỗ tự nhiên, không hóa chất, an toàn cho sức khỏe – thích hợp xông nhà, phòng ngủ, phòng khách, không gian thờ cúng.",
+      "url": "https://s.shopee.vn/4LDsoy3Fp7",
+      "tag": "Nụ trầm hương",
+      "ctaText": "Mua ngay"
+    },
+    {
       "id": "blog-001",
       "title": "Cách chọn kem chống nắng theo loại da",
       "summary": "Tóm tắt tiêu chí SPF, PA và texture phù hợp da dầu, da khô, da nhạy cảm để mua đúng ngay từ đầu.",
@@ -26,6 +42,16 @@
     }
   ],
   "faqs": [
+    {
+      "id": "faq_1770977417799",
+      "question": "Tượng Phật Thích Ca gỗ Bách có bền không?",
+      "answer": "Tượng được làm từ gỗ Bách xanh liền khối, độ bền cao, mùi gỗ tự nhiên dịu nhẹ, thích hợp trưng bày lâu dài trong không gian tâm linh."
+    },
+    {
+      "id": "faq_1770975686515",
+      "question": "Nụ trầm hương có an toàn cho sức khỏe không?",
+      "answer": "Có. Sản phẩm được làm từ bột trầm hương tự nhiên, không hương liệu, không phẩm màu, không hóa chất độc hại. Hương trầm dịu nhẹ, không cay mắt, không gây ngạt, dùng được cả trong phòng máy lạnh."
+    },
     {
       "id": "faq-001",
       "question": "Mỹ Phẩm Thái Nguyên có bán hàng trực tiếp không?",
