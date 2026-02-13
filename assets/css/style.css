@@ -447,6 +447,18 @@ body {
   touch-action: pan-y;
 }
 
+.viewer-image-slot {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #fff;
+  position: relative;
+}
+.viewer-image-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
 .detail-viewer video,
 .detail-viewer img {
   width: 100%;

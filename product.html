@@ -47,7 +47,7 @@
           <div class="detail-viewer">
             <button id="prevMediaBtn" class="viewer-nav prev" type="button" aria-label="Ảnh trước">‹</button>
             <button id="nextMediaBtn" class="viewer-nav next" type="button" aria-label="Ảnh sau">›</button>
-            <img id="viewerImage" src="" alt="" />
+            <div id="viewerImageSlot" class="viewer-image-slot"><img id="viewerImage" src="" alt="" /></div>
             <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
             <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
               <span class="material-icons" aria-hidden="true">play_arrow</span>
@@ -111,7 +111,7 @@
   </nav>
 
   <script id="productJsonLd" type="application/ld+json">{}</script>
-  <script src="assets/js/product.js?v=20260220" defer></script>
+  <script src="assets/js/product.js?v=20260221" defer></script>
   <script>
     (function productInlineFallback() {
       function slugify(value) {
@@ -196,13 +196,13 @@
       }
 
       function renderMediaGallery(product) {
-        var viewerImage = document.getElementById("viewerImage");
+        var imageSlot = document.getElementById("viewerImageSlot");
         var viewerVideo = document.getElementById("viewerVideo");
         var viewerThumbs = document.getElementById("viewerThumbs");
         var videoOverlay = document.getElementById("videoPlayOverlay");
         var prevBtn = document.getElementById("prevMediaBtn");
         var nextBtn = document.getElementById("nextMediaBtn");
-        if (!viewerImage || !viewerThumbs) return;
+        if (!imageSlot || !viewerThumbs) return;
         var mediaList = getMediaList(product);
         var idx = 0;
         function setActive(i) {
@@ -213,8 +213,7 @@
           });
           var item = mediaList[idx];
           if (item.type === "video") {
-            viewerImage.classList.add("hidden");
-            viewerImage.src = "";
+            imageSlot.classList.add("hidden");
             if (viewerVideo) {
               viewerVideo.classList.remove("hidden");
               viewerVideo.muted = true;
@@ -234,9 +233,13 @@
                 viewerVideo.classList.add("hidden");
                 viewerVideo.src = "";
                 if (videoOverlay) videoOverlay.classList.add("hidden");
-                viewerImage.classList.remove("hidden");
-                viewerImage.src = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-                viewerImage.alt = product.name;
+                imageSlot.classList.remove("hidden");
+                var img = document.createElement("img");
+                img.id = "viewerImage";
+                img.src = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
+                img.alt = product.name;
+                imageSlot.innerHTML = "";
+                imageSlot.appendChild(img);
               };
             }
           } else {
@@ -246,15 +249,17 @@
               viewerVideo.src = "";
               if (videoOverlay) videoOverlay.classList.add("hidden");
             }
-            viewerImage.classList.remove("hidden");
-            viewerImage.onerror = null;
-            viewerImage.src = "";
-            viewerImage.src = item.url || FALLBACK_IMG;
-            viewerImage.alt = product.name;
-            viewerImage.onerror = function () {
-              viewerImage.onerror = null;
-              viewerImage.src = FALLBACK_IMG;
+            imageSlot.classList.remove("hidden");
+            var img = document.createElement("img");
+            img.id = "viewerImage";
+            img.src = item.url || FALLBACK_IMG;
+            img.alt = product.name;
+            img.onerror = function () {
+              this.onerror = null;
+              this.src = FALLBACK_IMG;
             };
+            imageSlot.innerHTML = "";
+            imageSlot.appendChild(img);
           }
         }
         viewerThumbs.innerHTML = "";

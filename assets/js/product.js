@@ -198,8 +198,9 @@ function getMediaList(product) {
 }
 
 function renderViewer(mediaItem) {
+  const imageSlot = document.getElementById("viewerImageSlot");
   if (mediaItem.type === "video") {
-    viewerImage.classList.add("hidden");
+    if (imageSlot) imageSlot.classList.add("hidden");
     viewerVideo.classList.remove("hidden");
     viewerVideo.muted = true;
     viewerVideo.loop = true;
@@ -214,28 +215,32 @@ function renderViewer(mediaItem) {
       .catch(() => videoPlayOverlay?.classList.remove("hidden"));
     viewerVideo.onerror = () => {
       viewerVideo.classList.add("hidden");
-      viewerImage.classList.remove("hidden");
-      viewerImage.src = FALLBACK_IMAGE;
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      const img = document.getElementById("viewerImage");
+      if (img) img.src = FALLBACK_IMAGE;
       videoPlayOverlay?.classList.add("hidden");
     };
     return;
   }
 
+  if (imageSlot) imageSlot.classList.remove("hidden");
   viewerVideo.pause();
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
   videoPlayOverlay?.classList.add("hidden");
-  const img = document.getElementById("viewerImage");
-  if (!img) return;
-  img.classList.remove("hidden");
+  const slot = document.getElementById("viewerImageSlot");
+  if (!slot) return;
   const url = mediaItem.url || FALLBACK_IMAGE;
-  img.removeAttribute("src");
-  img.src = url;
+  const img = document.createElement("img");
+  img.id = "viewerImage";
   img.alt = activeProduct?.name || "Ảnh sản phẩm";
+  img.src = url;
   img.onerror = function () {
     this.onerror = null;
     this.src = FALLBACK_IMAGE;
   };
+  slot.innerHTML = "";
+  slot.appendChild(img);
 }
 
 function setActiveThumb(index) {
@@ -461,8 +466,18 @@ function renderNotFound() {
   productDetailsEl.textContent = "Vui lòng quay lại trang chủ để chọn sản phẩm khác.";
   buyNowBtn.classList.add("hidden");
   viewerThumbs.innerHTML = "";
-  viewerImage.src = FALLBACK_IMAGE;
-  videoPlayOverlay?.classList.add("hidden");
+  const slot = document.getElementById("viewerImageSlot");
+  if (slot) {
+    const img = document.createElement("img");
+    img.id = "viewerImage";
+    img.src = FALLBACK_IMAGE;
+    img.alt = "Không tìm thấy";
+    slot.innerHTML = "";
+    slot.appendChild(img);
+  }
+  viewerVideo.classList.add("hidden");
+  viewerVideo.src = "";
+  if (videoPlayOverlay) videoPlayOverlay.classList.add("hidden");
 }
 
 async function loadProducts() {
