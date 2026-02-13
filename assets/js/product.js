@@ -440,21 +440,26 @@ function renderNotFound() {
 }
 
 async function loadProducts() {
+  let localProducts = [];
   const localData = localStorage.getItem(STORAGE_KEY);
   if (localData !== null) {
     try {
       const parsed = JSON.parse(localData);
       if (Array.isArray(parsed)) {
-        return parsed.map(normalizeProduct);
+        localProducts = parsed.map(normalizeProduct);
       }
     } catch {
-      // fallback fetch
+      // ignore malformed local cache
     }
   }
-
-  const res = await fetch(DATA_URL);
-  const data = await res.json();
-  return Array.isArray(data) ? data.map(normalizeProduct) : [];
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data.map(normalizeProduct) : [];
+  } catch {
+    return localProducts;
+  }
 }
 
 async function init() {

@@ -8,6 +8,15 @@ const BLOG_STORAGE_KEY = "mypham_blog_content";
 const BLOG_DATA_URL = "assets/data/blogs.json";
 const GITHUB_PUBLISH_CONFIG_KEY = "mypham_github_publish_config";
 const AUTO_GITHUB_PUBLISH_KEY = "mypham_auto_github_publish";
+const SESSION_GITHUB_TOKEN_KEY = "mypham_github_token_session";
+const REMEMBER_GITHUB_TOKEN_KEY = "mypham_remember_github_token";
+const DEFAULT_GITHUB_PUBLISH_CONFIG = {
+  owner: "thaonguyenngu999-ui",
+  repo: "myphamthainguyen",
+  branch: "main",
+  productsPath: "assets/data/products.json",
+  blogsPath: "assets/data/blogs.json"
+};
 
 const authGate = document.getElementById("authGate");
 const adminDashboard = document.getElementById("adminDashboard");
@@ -65,6 +74,7 @@ const githubTokenInput = document.getElementById("githubToken");
 const githubPublishBtn = document.getElementById("githubPublishBtn");
 const githubPublishStatus = document.getElementById("githubPublishStatus");
 const autoGithubPublishInput = document.getElementById("autoGithubPublish");
+const rememberGithubTokenInput = document.getElementById("rememberGithubToken");
 const blogPostForm = document.getElementById("blogPostForm");
 const blogPostIdInput = document.getElementById("blogPostId");
 const blogTitleInput = document.getElementById("blogTitle");
@@ -843,13 +853,14 @@ function sanitizeRepoPath(path, fallbackPath) {
 }
 
 function getGithubPublishConfigFromInputs() {
+  const fallbackSessionToken = String(sessionStorage.getItem(SESSION_GITHUB_TOKEN_KEY) || "").trim();
   return {
     owner: String(githubOwnerInput?.value || "").trim(),
     repo: String(githubRepoInput?.value || "").trim(),
     branch: String(githubBranchInput?.value || "").trim() || "main",
     productsPath: sanitizeRepoPath(githubProductsPathInput?.value, "assets/data/products.json"),
     blogsPath: sanitizeRepoPath(githubBlogsPathInput?.value, "assets/data/blogs.json"),
-    token: String(githubTokenInput?.value || "").trim()
+    token: String(githubTokenInput?.value || "").trim() || fallbackSessionToken
   };
 }
 
@@ -868,14 +879,31 @@ function saveGithubPublishConfig() {
 function hydrateGithubPublishConfig() {
   try {
     const parsed = JSON.parse(localStorage.getItem(GITHUB_PUBLISH_CONFIG_KEY) || "{}");
-    if (githubOwnerInput) githubOwnerInput.value = String(parsed.owner || githubOwnerInput.value || "").trim();
-    if (githubRepoInput) githubRepoInput.value = String(parsed.repo || githubRepoInput.value || "").trim();
-    if (githubBranchInput) githubBranchInput.value = String(parsed.branch || githubBranchInput.value || "main").trim();
-    if (githubProductsPathInput) githubProductsPathInput.value = sanitizeRepoPath(parsed.productsPath, "assets/data/products.json");
-    if (githubBlogsPathInput) githubBlogsPathInput.value = sanitizeRepoPath(parsed.blogsPath, "assets/data/blogs.json");
+    if (githubOwnerInput) githubOwnerInput.value = String(parsed.owner || githubOwnerInput.value || DEFAULT_GITHUB_PUBLISH_CONFIG.owner).trim();
+    if (githubRepoInput) githubRepoInput.value = String(parsed.repo || githubRepoInput.value || DEFAULT_GITHUB_PUBLISH_CONFIG.repo).trim();
+    if (githubBranchInput) githubBranchInput.value = String(parsed.branch || githubBranchInput.value || DEFAULT_GITHUB_PUBLISH_CONFIG.branch).trim();
+    if (githubProductsPathInput) githubProductsPathInput.value = sanitizeRepoPath(parsed.productsPath, DEFAULT_GITHUB_PUBLISH_CONFIG.productsPath);
+    if (githubBlogsPathInput) githubBlogsPathInput.value = sanitizeRepoPath(parsed.blogsPath, DEFAULT_GITHUB_PUBLISH_CONFIG.blogsPath);
   } catch {
     // ignore invalid saved config
   }
+}
+
+function hydrateGithubTokenPreference() {
+  const remember = localStorage.getItem(REMEMBER_GITHUB_TOKEN_KEY) === "1";
+  if (rememberGithubTokenInput) rememberGithubTokenInput.checked = remember;
+  if (remember && githubTokenInput) {
+    githubTokenInput.value = String(sessionStorage.getItem(SESSION_GITHUB_TOKEN_KEY) || "");
+  }
+}
+
+function syncGithubTokenSession() {
+  if (!rememberGithubTokenInput?.checked) {
+    sessionStorage.removeItem(SESSION_GITHUB_TOKEN_KEY);
+    return;
+  }
+  const token = String(githubTokenInput?.value || "").trim();
+  if (token) sessionStorage.setItem(SESSION_GITHUB_TOKEN_KEY, token);
 }
 
 function hydrateAutoPublishSetting() {
@@ -965,6 +993,7 @@ async function publishToGithub(options = {}) {
     githubPublishBtn.disabled = true;
     setGithubPublishStatus(reason ? `Đang xuất bản (${reason})...` : "Đang xuất bản dữ liệu lên GitHub...");
     saveGithubPublishConfig();
+    syncGithubTokenSession();
 
     products = ensureUniqueSlugs(products.map(normalizeProduct));
     if (!saveProductsToLocal()) {
@@ -995,7 +1024,10 @@ async function publishToGithub(options = {}) {
       message: `publish blogs from admin (${now})`
     });
 
-    githubTokenInput.value = "";
+    if (!rememberGithubTokenInput?.checked) {
+      githubTokenInput.value = "";
+      sessionStorage.removeItem(SESSION_GITHUB_TOKEN_KEY);
+    }
     setGithubPublishStatus(`Xuất bản thành công lúc ${now}.`);
     if (!silent) {
       alert("Đã xuất bản lên GitHub. Đợi GitHub Pages build 1-2 phút, sau đó purge cache Cloudflare.");
@@ -1398,6 +1430,16 @@ function bindDashboardEvents() {
   });
   githubPublishBtn?.addEventListener("click", publishToGithub);
   autoGithubPublishInput?.addEventListener("change", saveAutoPublishSetting);
+  rememberGithubTokenInput?.addEventListener("change", () => {
+    localStorage.setItem(REMEMBER_GITHUB_TOKEN_KEY, rememberGithubTokenInput.checked ? "1" : "0");
+    if (!rememberGithubTokenInput.checked) {
+      sessionStorage.removeItem(SESSION_GITHUB_TOKEN_KEY);
+      githubTokenInput.value = "";
+    } else {
+      syncGithubTokenSession();
+    }
+  });
+  githubTokenInput?.addEventListener("input", syncGithubTokenSession);
 
   blogPostForm?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1510,6 +1552,7 @@ async function initDashboard() {
   await loadProducts();
   await loadBlogContent();
   hydrateGithubPublishConfig();
+  hydrateGithubTokenPreference();
   hydrateAutoPublishSetting();
   setGithubPublishStatus("Sẵn sàng xuất bản.");
   refreshCategoryOptions();

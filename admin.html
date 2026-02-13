@@ -107,11 +107,11 @@
         <div class="form-grid admin-publish-grid">
           <div class="form-group">
             <label for="githubOwner">GitHub Owner *</label>
-            <input id="githubOwner" type="text" placeholder="thaonguyenngu999-ui" />
+            <input id="githubOwner" type="text" placeholder="thaonguyenngu999-ui" value="thaonguyenngu999-ui" />
           </div>
           <div class="form-group">
             <label for="githubRepo">Repository *</label>
-            <input id="githubRepo" type="text" placeholder="myphamthainguyen" />
+            <input id="githubRepo" type="text" placeholder="myphamthainguyen" value="myphamthainguyen" />
           </div>
           <div class="form-group">
             <label for="githubBranch">Branch</label>
@@ -128,6 +128,10 @@
           <div class="form-group">
             <label for="githubToken">Fine-grained GitHub Token *</label>
             <input id="githubToken" type="password" placeholder="github_pat_..." autocomplete="off" />
+            <label class="remember-token-toggle" for="rememberGithubToken">
+              <input id="rememberGithubToken" type="checkbox" />
+              <span>Nhớ token trong phiên này</span>
+            </label>
           </div>
         </div>
         <div class="admin-actions">
@@ -414,6 +418,6 @@
     </a>
   </nav>
 
-  <script src="assets/js/admin.js?v=20260213" defer></script>
+  <script src="assets/js/admin.js?v=20260214" defer></script>
 </body>
 </html>

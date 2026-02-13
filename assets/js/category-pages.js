@@ -136,7 +136,7 @@ function extractBrand(name, explicitBrand = "") {
 
 function buildProductDetailUrl(product) {
   const slug = createProductSlug(product?.slug || product?.name || product?.id || "");
-  return `${BASE_PREFIX}san-pham/${encodeURIComponent(slug)}`;
+  return `${BASE_PREFIX}product?slug=${encodeURIComponent(slug)}`;
 }
 
 function buildPageHref(page) {
@@ -217,21 +217,26 @@ function getPageType() {
 }
 
 async function loadProducts() {
+  let localProducts = [];
   const localData = localStorage.getItem(STORAGE_KEY);
   if (localData !== null) {
     try {
       const parsed = JSON.parse(localData);
       if (Array.isArray(parsed)) {
-        return parsed.map(normalizeProduct).filter(isUsableProduct);
+        localProducts = parsed.map(normalizeProduct).filter(isUsableProduct);
       }
     } catch {
-      // fallback fetch
+      // ignore malformed local cache
     }
   }
-  const response = await fetch(DATA_URL);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json();
-  return Array.isArray(data) ? data.map(normalizeProduct).filter(isUsableProduct) : [];
+  try {
+    const response = await fetch(DATA_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    return Array.isArray(data) ? data.map(normalizeProduct).filter(isUsableProduct) : [];
+  } catch {
+    return localProducts;
+  }
 }
 
 function getFiltersFromUrl() {

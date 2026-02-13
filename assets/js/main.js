@@ -795,7 +795,7 @@ function estimateSold(id) {
 
 function buildProductDetailUrl(product) {
   const slug = createProductSlug(product?.slug || product?.name || product?.id || "");
-  return `san-pham/${encodeURIComponent(slug)}`;
+  return `product?slug=${encodeURIComponent(slug)}`;
 }
 
 function initBottomNavActive() {
@@ -1049,34 +1049,30 @@ function getProductById(id) {
 }
 
 async function loadProducts() {
+  let localProducts = [];
   const localData = localStorage.getItem(STORAGE_KEY);
-
   if (localData !== null) {
     try {
       const parsed = JSON.parse(localData);
       if (Array.isArray(parsed)) {
-        allProducts = parsed.map(normalizeProduct).filter(isUsableProduct);
-        filteredProducts = sortByBestDeal(allProducts);
-        renderProducts(filteredProducts);
-        renderCategorySections(filteredProducts);
-        renderHotDeals(allProducts);
-        renderPromoSlides(allProducts);
-        restartPromoTimer();
-        return;
+        localProducts = parsed.map(normalizeProduct).filter(isUsableProduct);
       }
     } catch {
-      // fallback ve products.json neu localStorage bi loi parse
+      // ignore malformed local cache
     }
   }
-
   try {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     allProducts = Array.isArray(data) ? data.map(normalizeProduct) : [];
   } catch {
-    // Khi mo bang file:// hoac host loi, van hien du lieu mau de khong bi trang trang
-    allProducts = FALLBACK_PRODUCTS.map(normalizeProduct);
+    if (localProducts.length) {
+      allProducts = localProducts;
+    } else {
+      // Khi mo bang file:// hoac host loi, van hien du lieu mau de khong bi trang trang
+      allProducts = FALLBACK_PRODUCTS.map(normalizeProduct);
+    }
   }
 
   allProducts = allProducts.filter(isUsableProduct);
