@@ -451,45 +451,10 @@ function bindMediaNavigation() {
 
   videoPlayOverlay?.addEventListener("click", () => {
     const videoUrl = videoPlayOverlay._pendingVideoUrl;
-    const posterOriginalUrl = videoPlayOverlay._posterUrl || "";
     if (!videoUrl) return;
 
-    const imageSlot = document.getElementById("viewerImageSlot");
-    const imgEl = document.getElementById("viewerImage");
-
-    function fallbackToImage() {
-      viewerVideo.pause();
-      viewerVideo.src = "";
-      viewerVideo.classList.add("hidden");
-      if (imageSlot) {
-        imageSlot.classList.remove("hidden");
-      }
-      if (imgEl) {
-        const posterProxied = proxyImageUrl(posterOriginalUrl || FALLBACK_IMAGE, 0);
-        imgEl.onerror = function () { this.onerror = null; this.src = FALLBACK_IMAGE; };
-        imgEl.src = posterProxied;
-      }
-      videoPlayOverlay.classList.add("hidden");
-    }
-
-    /* Ẩn ảnh poster, hiện video */
-    if (imageSlot) {
-      imageSlot.classList.add("hidden");
-    }
-    viewerVideo.classList.remove("hidden");
-    viewerVideo.muted = true;
-    viewerVideo.loop = true;
-    viewerVideo.playsInline = true;
-    viewerVideo.setAttribute("playsinline", "");
-    viewerVideo.setAttribute("muted", "");
-    if (posterOriginalUrl) viewerVideo.poster = proxyImageUrl(posterOriginalUrl);
-    viewerVideo.src = videoUrl;
-    viewerVideo.load();
-    viewerVideo.play()
-      .then(() => videoPlayOverlay.classList.add("hidden"))
-      .catch(() => fallbackToImage());
-
-    viewerVideo.onerror = () => fallbackToImage();
+    /* Video Shopee bị chặn CORS khi embed → mở trong tab mới */
+    window.open(videoUrl, "_blank", "noopener");
   });
 }
 
