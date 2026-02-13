@@ -201,6 +201,14 @@ function renderViewerByIndex(index) {
   const mediaItem = currentMediaList[index];
   if (!mediaItem) return;
   const imageSlot = document.getElementById("viewerImageSlot");
+  const imgA = document.getElementById("galleryImgA");
+  const imgB = document.getElementById("galleryImgB");
+  const prev = document.getElementById("prevMediaBtn");
+  const next = document.getElementById("nextMediaBtn");
+  const showNav = currentMediaList.length > 1;
+  if (prev) prev.classList.toggle("hidden", !showNav);
+  if (next) next.classList.toggle("hidden", !showNav);
+
   if (mediaItem.type === "video") {
     if (imageSlot) imageSlot.classList.add("hidden");
     viewerVideo.classList.remove("hidden");
@@ -217,25 +225,33 @@ function renderViewerByIndex(index) {
       .catch(() => videoPlayOverlay?.classList.remove("hidden"));
     viewerVideo.onerror = () => {
       viewerVideo.classList.add("hidden");
-      if (imageSlot) {
-        imageSlot.classList.remove("hidden");
-        imageSlot.style.backgroundImage = `url("${FALLBACK_IMAGE}")`;
-      }
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imgA) { imgA.src = FALLBACK_IMAGE; imgA.classList.add("active"); }
+      if (imgB) imgB.classList.remove("active");
       videoPlayOverlay?.classList.add("hidden");
     };
     return;
   }
 
-  if (imageSlot) {
-    imageSlot.classList.remove("hidden");
-    const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
-    const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
-    imageSlot.style.backgroundImage = `url("${bust.replace(/"/g, "%22")}")`;
-  }
+  if (imageSlot) imageSlot.classList.remove("hidden");
   viewerVideo.pause();
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
   videoPlayOverlay?.classList.add("hidden");
+
+  const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
+  const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
+  const activeImg = imgA?.classList.contains("active") ? imgA : imgB;
+  const nextImg = activeImg === imgA ? imgB : imgA;
+  if (!nextImg) return;
+  nextImg.onerror = function () {
+    nextImg.src = FALLBACK_IMAGE;
+    nextImg.onerror = null;
+  };
+  nextImg.src = bust;
+  nextImg.alt = activeProduct?.name || "Ảnh sản phẩm";
+  nextImg.classList.add("active");
+  activeImg.classList.remove("active");
 }
 
 function setActiveThumb(index) {
@@ -468,11 +484,17 @@ function renderNotFound() {
   productDetailsEl.textContent = "Vui lòng quay lại trang chủ để chọn sản phẩm khác.";
   buyNowBtn.classList.add("hidden");
   viewerThumbs.innerHTML = "";
+  currentMediaList = [];
   const slot = document.getElementById("viewerImageSlot");
-  if (slot) {
-    slot.classList.remove("hidden");
-    slot.style.backgroundImage = `url("${FALLBACK_IMAGE}")`;
-  }
+  const imgA = document.getElementById("galleryImgA");
+  const imgB = document.getElementById("galleryImgB");
+  const prev = document.getElementById("prevMediaBtn");
+  const next = document.getElementById("nextMediaBtn");
+  if (slot) slot.classList.remove("hidden");
+  if (imgA) { imgA.src = FALLBACK_IMAGE; imgA.classList.add("active"); imgA.alt = "Không tìm thấy"; }
+  if (imgB) { imgB.src = ""; imgB.classList.remove("active"); }
+  if (prev) prev.classList.add("hidden");
+  if (next) next.classList.add("hidden");
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
   if (videoPlayOverlay) videoPlayOverlay.classList.add("hidden");

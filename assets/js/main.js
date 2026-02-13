@@ -28,7 +28,6 @@ const blogFaqJsonLd = document.getElementById("blogFaqJsonLd");
 
 const modal = document.getElementById("productModal");
 const closeModalBtn = document.getElementById("closeModalBtn");
-const modalViewerImage = document.getElementById("modalViewerImage");
 const modalViewerVideo = document.getElementById("modalViewerVideo");
 const modalThumbs = document.getElementById("modalThumbs");
 const modalName = document.getElementById("modalName");
@@ -51,6 +50,8 @@ let filteredProducts = [];
 let selectedCategory = "all";
 let searchTimer = null;
 let activeModalProduct = null;
+let modalMediaList = [];
+let modalMediaIndex = 0;
 let promoSlides = [];
 let promoIndex = 0;
 let promoTimer = null;
@@ -686,6 +687,8 @@ function closeModal() {
   modalViewerVideo.src = "";
   modalVideoPlayOverlay?.classList.add("hidden");
   activeModalProduct = null;
+  modalMediaList = [];
+  modalMediaIndex = 0;
   modalThumbs.innerHTML = "";
 }
 
@@ -698,11 +701,20 @@ function getModalMediaList(product) {
   return media.length ? media : [{ type: "image", url: FALLBACK_IMAGE }];
 }
 
-function renderModalViewer(mediaItem) {
+function renderModalViewerByIndex(index) {
+  const mediaItem = modalMediaList[index];
   if (!mediaItem) return;
+  const imageSlot = document.getElementById("modalImageSlot");
+  const imgA = document.getElementById("modalImgA");
+  const imgB = document.getElementById("modalImgB");
+  const prevBtn = document.getElementById("modalPrevBtn");
+  const nextBtn = document.getElementById("modalNextBtn");
+  const showNav = modalMediaList.length > 1;
+  if (prevBtn) prevBtn.classList.toggle("hidden", !showNav);
+  if (nextBtn) nextBtn.classList.toggle("hidden", !showNav);
 
   if (mediaItem.type === "video") {
-    modalViewerImage.classList.add("hidden");
+    if (imageSlot) imageSlot.classList.add("hidden");
     modalViewerVideo.classList.remove("hidden");
     modalViewerVideo.muted = true;
     modalViewerVideo.loop = true;
@@ -717,32 +729,48 @@ function renderModalViewer(mediaItem) {
       .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
     modalViewerVideo.onerror = () => {
       modalViewerVideo.classList.add("hidden");
-      modalViewerImage.classList.remove("hidden");
-      modalViewerImage.src = FALLBACK_IMAGE;
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imgA) { imgA.src = FALLBACK_IMAGE; imgA.classList.add("active"); }
+      if (imgB) imgB.classList.remove("active");
       modalVideoPlayOverlay?.classList.add("hidden");
     };
     return;
   }
 
+  if (imageSlot) imageSlot.classList.remove("hidden");
   modalViewerVideo.pause();
   modalViewerVideo.classList.add("hidden");
   modalViewerVideo.src = "";
   modalVideoPlayOverlay?.classList.add("hidden");
-  modalViewerImage.classList.remove("hidden");
-  modalViewerImage.src = mediaItem.url || FALLBACK_IMAGE;
-  modalViewerImage.alt = activeModalProduct?.name || "San pham";
-  modalViewerImage.onerror = () => {
-    modalViewerImage.onerror = null;
-    modalViewerImage.src = FALLBACK_IMAGE;
-  };
+
+  const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
+  const bust = url + (url.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
+  const activeImg = imgA?.classList.contains("active") ? imgA : imgB;
+  const nextImg = activeImg === imgA ? imgB : imgA;
+  if (!nextImg) return;
+  nextImg.onerror = () => { nextImg.src = FALLBACK_IMAGE; nextImg.onerror = null; };
+  nextImg.src = bust;
+  nextImg.alt = activeModalProduct?.name || "Sản phẩm";
+  nextImg.classList.add("active");
+  activeImg.classList.remove("active");
+}
+
+function showModalMediaAt(index) {
+  if (!modalMediaList.length) return;
+  modalMediaIndex = (index + modalMediaList.length) % modalMediaList.length;
+  renderModalViewerByIndex(modalMediaIndex);
+  modalThumbs.querySelectorAll(".thumb-item").forEach((el, i) => {
+    el.classList.toggle("active", i === modalMediaIndex);
+  });
 }
 
 function renderModalMedia(product) {
-  const mediaList = getModalMediaList(product);
+  modalMediaList = getModalMediaList(product);
+  modalMediaIndex = 0;
   modalThumbs.innerHTML = "";
-  renderModalViewer(mediaList[0]);
+  renderModalViewerByIndex(0);
 
-  mediaList.forEach((item, index) => {
+  modalMediaList.forEach((item, index) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "thumb-item";
@@ -756,14 +784,37 @@ function renderModalMedia(product) {
       btn.innerHTML = `<img src="${item.url}" alt="thumb" loading="lazy" />`;
     }
 
-    btn.addEventListener("click", () => {
-      modalThumbs.querySelectorAll(".thumb-item").forEach((el) => el.classList.remove("active"));
-      btn.classList.add("active");
-      renderModalViewer(item);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const i = parseInt(btn.dataset.index, 10);
+      if (!Number.isNaN(i)) showModalMediaAt(i);
     });
 
     modalThumbs.appendChild(btn);
   });
+
+  const prevBtn = document.getElementById("modalPrevBtn");
+  const nextBtn = document.getElementById("modalNextBtn");
+  const gallery = document.getElementById("modalGallery");
+  if (prevBtn) prevBtn.onclick = (e) => { e.preventDefault(); showModalMediaAt(modalMediaIndex - 1); };
+  if (nextBtn) nextBtn.onclick = (e) => { e.preventDefault(); showModalMediaAt(modalMediaIndex + 1); };
+
+  if (gallery && !gallery.dataset.swipeBound) {
+    gallery.dataset.swipeBound = "1";
+    let touchStartX = 0;
+    gallery.addEventListener("touchstart", (e) => { touchStartX = e.touches?.[0]?.clientX || 0; }, { passive: true });
+    gallery.addEventListener("touchend", (e) => {
+      const touch = e.changedTouches?.[0];
+      if (!touch || touchStartX === 0) return;
+      const delta = touch.clientX - touchStartX;
+      if (Math.abs(delta) > 50) {
+        if (delta < 0) showModalMediaAt(modalMediaIndex + 1);
+        else showModalMediaAt(modalMediaIndex - 1);
+      }
+      touchStartX = 0;
+    }, { passive: true });
+  }
 }
 
 function applySearch() {
