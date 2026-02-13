@@ -67,6 +67,7 @@ const productJsonLd = document.getElementById("productJsonLd");
 
 let currentMediaList = [];
 let currentMediaIndex = 0;
+let allProductsForPage = [];
 let pointerStartX = null;
 let isPointerDown = false;
 let activeProduct = null;
@@ -148,6 +149,210 @@ function findProductByRoute(products, targetSlug = "", idFromQuery = "") {
   return null;
 }
 
+function buildProductDetailUrl(product) {
+  const slug = createProductSlug(product?.slug || product?.name || product?.id || "");
+  return `product?slug=${encodeURIComponent(slug)}`;
+}
+
+function buildProductCardHtml(product, extraClass = "") {
+  const detailUrl = buildProductDetailUrl(product);
+  const imgUrl = proxyImageUrl(product.images?.[0] || product.image || FALLBACK_IMAGE);
+  return `
+    <article class="product-card ${extraClass}" data-id="${product.id}">
+      <a class="product-link" href="${detailUrl}">
+        <div class="product-image-wrap">
+          <img class="product-image" src="${imgUrl}" alt="${(product.name || "").replace(/"/g, "&quot;")}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" />
+          <span class="discount-badge">-${product.discount}%</span>
+        </div>
+      </a>
+      <div class="product-body">
+        <a class="product-link" href="${detailUrl}">
+          <h3 class="product-name">${(product.name || "Sản phẩm").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</h3>
+        </a>
+        <div class="price-row">
+          <span class="current-price">${formatVnd(product.currentPrice)}</span>
+          <span class="old-price">${formatVnd(product.oldPrice)}</span>
+        </div>
+        <div class="meta-row">
+          <span class="category-pill">${(product.subCategory || product.category || "").replace(/</g, "&lt;")}</span>
+          <span class="sold-text">Đã bán ${estimateSold(product.id)}</span>
+        </div>
+        <a class="btn-primary buy-now" href="${detailUrl}">Mua ngay</a>
+      </div>
+    </article>
+  `;
+}
+
+function renderRelatedProducts(currentProduct, products) {
+  const grid = document.getElementById("relatedProductGrid");
+  const section = document.getElementById("relatedProductsSection");
+  if (!grid || !section) return;
+  const catSlug = currentProduct?.categorySlug || slugify(currentProduct?.category || "");
+  const related = (products || [])
+    .filter((p) => p.id !== currentProduct?.id && (p.categorySlug === catSlug || slugify(p.category) === catSlug))
+    .slice(0, 8);
+  if (!related.length) {
+    section.classList.add("hidden");
+    return;
+  }
+  section.classList.remove("hidden");
+  grid.innerHTML = related.map((p) => buildProductCardHtml(p)).join("");
+}
+
+function initSearchRedirect() {
+  const searchInput = document.getElementById("searchInput");
+  const searchBtn = document.getElementById("searchBtn");
+  const doSearch = () => {
+    const q = String(searchInput?.value || "").trim();
+    if (q) location.href = `san-pham.html?q=${encodeURIComponent(q)}`;
+    else location.href = "san-pham.html";
+  };
+  searchBtn?.addEventListener("click", doSearch);
+  searchInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+}
+
+function initCategorySidebarFromProducts(products) {
+  const sidebar = document.getElementById("categorySidebar");
+  const backdrop = document.getElementById("categoryBackdrop");
+  const accordionRoot = document.getElementById("categoryAccordion");
+  const openBtn = document.getElementById("openCategoryDrawer");
+  const closeBtn = document.getElementById("closeCategoryDrawer");
+  const bottomMenuBtn = document.querySelector('.bottom-nav a[data-open-category="1"]');
+  if (!sidebar || !accordionRoot || !products || !products.length) return;
+
+  const iconMap = { "cham-soc-da": "spa", "trang-diem": "brush", "cham-soc-toc": "content_cut", "co-the": "self_improvement", "nganh-khac": "category", "bo-san-pham": "inventory_2", "tay-trang": "cleaning_services", "rua-mat": "water_drop", "toner-xit-khoang": "opacity", serum: "science", "kem-duong": "spa", "kem-chong-nang": "wb_sunny", "chong-nang": "wb_sunny", "mat-na": "face", "son-moi": "favorite" };
+  const grouped = new Map();
+  products.forEach((item) => {
+    const categoryLabel = String(item.category || "").trim() || "Khác";
+    const categorySlug = item.categorySlug || slugify(categoryLabel);
+    const subLabel = String(item.subCategory || "Khác").trim() || "Khác";
+    const subSlug = item.subCategorySlug || slugify(subLabel);
+    if (!grouped.has(categorySlug)) grouped.set(categorySlug, { label: categoryLabel, slug: categorySlug, subs: new Map() });
+    const section = grouped.get(categorySlug);
+    if (!section.subs.has(subSlug)) section.subs.set(subSlug, { label: subLabel, slug: subSlug });
+  });
+  const orderedSections = [...grouped.values()].sort((a, b) => (a.label || "").localeCompare(b.label || "", "vi"));
+  const sectionHtml = orderedSections
+    .map((section, index) => {
+      const sectionId = `cat-section-${section.slug || index}`;
+      const childHtml = [...section.subs.values()]
+        .sort((a, b) => (a.label || "").localeCompare(b.label || "", "vi"))
+        .map((item) => `
+          <li>
+            <a href="san-pham.html?category=${encodeURIComponent(section.slug)}&subCategory=${encodeURIComponent(item.slug)}" class="cat-sub-item">
+              <span class="cat-sub-item-left">
+                <span class="material-icons" aria-hidden="true">${iconMap[item.slug] || "folder"}</span>
+                <span>${(item.label || "").replace(/</g, "&lt;")}</span>
+              </span>
+              <span class="material-icons cat-sub-item-arrow" aria-hidden="true">chevron_right</span>
+            </a>
+          </li>
+        `)
+        .join("");
+      return `
+        <li class="cat-group ${index === 0 ? "active" : ""}">
+          <button class="cat-parent-btn cat-parent-btn--sub" type="button" aria-expanded="${index === 0}" aria-controls="${sectionId}">
+            <span class="cat-parent-btn__left">
+              <span class="material-icons" aria-hidden="true">${iconMap[section.slug] || "folder_open"}</span>
+              <span>${(section.label || "").replace(/</g, "&lt;")}</span>
+            </span>
+            <span class="material-icons cat-arrow" aria-hidden="true">chevron_right</span>
+          </button>
+          <ul id="${sectionId}" class="cat-sub-list ${index === 0 ? "is-open" : ""}">
+            ${childHtml}
+          </ul>
+        </li>
+      `;
+    })
+    .join("");
+
+  accordionRoot.innerHTML = `
+    <li>
+      <a href="sale.html" class="cat-action cat-action--sale">
+        <span class="cat-badge">Hot</span>
+        <span class="material-icons" aria-hidden="true">local_fire_department</span>
+        <span>Hot Sale</span>
+        <span class="material-icons cat-action__arrow" aria-hidden="true">chevron_right</span>
+      </a>
+    </li>
+    <li class="cat-group active">
+      <button class="cat-parent-btn" type="button" aria-expanded="true" aria-controls="cat-product-main">
+        <span class="cat-parent-btn__left">
+          <span class="material-icons" aria-hidden="true">spa</span>
+          <span>Sản phẩm</span>
+        </span>
+        <span class="material-icons cat-arrow" aria-hidden="true">chevron_right</span>
+      </button>
+      <ul id="cat-product-main" class="cat-sub-list is-open">
+        ${sectionHtml}
+      </ul>
+    </li>
+  `;
+
+  let groups = [];
+  const setSubListState = (group, expanded) => {
+    const btn = group?.querySelector(":scope > .cat-parent-btn");
+    const sub = group?.querySelector(":scope > .cat-sub-list");
+    if (!btn || !sub) return;
+    btn.setAttribute("aria-expanded", String(expanded));
+    group.classList.toggle("active", expanded);
+    sub.style.maxHeight = expanded ? `${sub.scrollHeight}px` : "0px";
+    sub.classList.toggle("is-open", expanded);
+  };
+  const closeSiblingGroups = (currentGroup) => {
+    const parent = currentGroup?.parentElement;
+    if (!parent) return;
+    [...parent.children].filter((el) => el !== currentGroup && el?.classList?.contains("cat-group")).forEach((g) => setSubListState(g, false));
+  };
+  const closeDrawer = () => {
+    sidebar.classList.remove("is-open");
+    backdrop?.setAttribute("hidden", "");
+    document.body.style.overflow = "";
+    openBtn?.setAttribute("aria-expanded", "false");
+    if (location.hash === "#menu") history.replaceState(null, "", location.pathname + location.search);
+  };
+  const openDrawer = () => {
+    sidebar.classList.add("is-open");
+    backdrop?.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
+    openBtn?.setAttribute("aria-expanded", "true");
+  };
+
+  groups = [...sidebar.querySelectorAll(".cat-group")];
+  sidebar.querySelectorAll(".cat-parent-btn").forEach((btn) => {
+    const group = btn.closest(".cat-group");
+    if (!group) return;
+    btn.addEventListener("click", () => {
+      const expanded = btn.getAttribute("aria-expanded") === "true";
+      if (!expanded) closeSiblingGroups(group);
+      setSubListState(group, !expanded);
+    });
+  });
+  const isMobileOrTablet = () => window.matchMedia("(max-width: 1023px)").matches;
+  sidebar.querySelectorAll(".cat-sub-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      sidebar.querySelectorAll(".cat-sub-item").forEach((el) => el.classList.remove("is-active"));
+      item.classList.add("is-active");
+      if (isMobileOrTablet()) closeDrawer();
+    });
+  });
+
+  const syncHeights = () => {
+    sidebar.querySelectorAll(".cat-group.active .cat-sub-list").forEach((sub) => {
+      sub.style.maxHeight = sub.scrollHeight + "px";
+    });
+  };
+  syncHeights();
+  window.addEventListener("resize", syncHeights);
+
+  openBtn?.addEventListener("click", openDrawer);
+  bottomMenuBtn?.addEventListener("click", (e) => { e.preventDefault(); openDrawer(); });
+  closeBtn?.addEventListener("click", closeDrawer);
+  backdrop?.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && sidebar.classList.contains("is-open")) closeDrawer(); });
+  if (location.hash === "#menu") openDrawer();
+}
+
 function estimateSold(id) {
   let hash = 0;
   const str = String(id || "mypham");
@@ -203,6 +408,8 @@ function normalizeProduct(product) {
       .map((item) => item.trim())
       .filter(Boolean);
 
+  const rawCategory = String(product.category || "").trim();
+  const rawSub = String(product.subCategory || rawCategory || "").trim();
   return {
     id: product.id || "",
     slug: createProductSlug(product.slug || product.name || product.id || "san-pham"),
@@ -213,7 +420,10 @@ function normalizeProduct(product) {
     oldPrice: Number(product.oldPrice) || 0,
     discount: Number(product.discount) || 0,
     affiliateLink: product.affiliateLink || "#",
-    category: product.category || "khac",
+    category: rawCategory || "Khác",
+    categorySlug: slugify(rawCategory || "khac"),
+    subCategory: rawSub || "Khác",
+    subCategorySlug: slugify(rawSub || "khac"),
     description: product.description || "",
     details: product.details || product.longDescription || product.description || "",
     specs
@@ -697,18 +907,24 @@ async function loadProducts() {
 async function init() {
   initBottomNavActive();
   bindMediaNavigation();
+  initSearchRedirect();
   const params = new URLSearchParams(location.search);
   const slugFromPath = createProductSlug(getSlugFromPath());
   const slugFromQuery = createProductSlug(params.get("slug") || "");
   const idFromQuery = params.get("id");
   const targetSlug = slugFromPath || slugFromQuery;
   if (!targetSlug && !idFromQuery) {
+    const products = await loadProducts();
+    allProductsForPage = products;
+    initCategorySidebarFromProducts(products);
     renderNotFound();
     return;
   }
 
   try {
     const products = await loadProducts();
+    allProductsForPage = products;
+    initCategorySidebarFromProducts(products);
     const product = findProductByRoute(products, targetSlug, idFromQuery);
     if (!product) {
       renderNotFound();
@@ -719,6 +935,7 @@ async function init() {
       history.replaceState(null, "", prettyPath);
     }
     renderProduct(product);
+    renderRelatedProducts(product, products);
   } catch (error) {
     console.error("Khong the tai du lieu san pham:", error);
     renderNotFound();

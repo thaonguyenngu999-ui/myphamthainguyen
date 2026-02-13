@@ -29,21 +29,48 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="logo" href="index.html">Mỹ Phẩm Thái Nguyên</a>
+      <div class="header-search">
+        <input id="searchInput" type="text" placeholder="Tìm son, serum, kem dưỡng, chống nắng..." aria-label="Tìm sản phẩm" />
+        <button id="searchBtn" type="button">Tìm kiếm</button>
+      </div>
       <nav class="header-actions">
-        <a href="index.html">Trang chu</a>
-        <a href="admin.html">Dang ky / Dang nhap</a>
+        <a href="index.html">Trang chủ</a>
+        <a id="adminEntry" class="admin-link" href="admin.html">Đăng ký / Đăng nhập</a>
+        <button id="openCategoryDrawer" class="category-toggle-btn" type="button" aria-controls="categorySidebar" aria-expanded="false">
+          <span class="material-icons" aria-hidden="true">menu</span>
+          <span>Danh mục</span>
+        </button>
       </nav>
     </div>
   </header>
 
-  <main class="container product-main">
-    <nav class="product-breadcrumb">
-      <a href="index.html">Trang chu</a>
-      <span>/</span>
-      <span id="breadcrumbCategory">Danh muc</span>
-      <span>/</span>
-      <span id="breadcrumbName">San pham</span>
+  <div id="categoryBackdrop" class="category-backdrop" hidden></div>
+  <aside id="categorySidebar" class="category-sidebar" aria-label="Danh mục sản phẩm">
+    <div class="category-sidebar__head">
+      <h2>Danh mục</h2>
+      <button id="closeCategoryDrawer" class="category-close-btn" type="button" aria-label="Đóng danh mục">
+        <span class="material-icons" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <nav class="category-nav" aria-label="Điều hướng danh mục">
+      <ul id="categoryAccordion" class="category-accordion"></ul>
     </nav>
+  </aside>
+
+  <main class="container product-main">
+    <section class="product-hero product-hero--compact">
+      <div class="product-hero__chip">
+        <span class="material-icons" aria-hidden="true">sell</span>
+        Chi tiết sản phẩm
+      </div>
+      <nav class="product-breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Trang chủ</a>
+        <span>/</span>
+        <span id="breadcrumbCategory">Danh mục</span>
+        <span>/</span>
+        <span id="breadcrumbName">Sản phẩm</span>
+      </nav>
+    </section>
 
     <section class="product-shell">
       <div class="detail-top">
@@ -104,11 +131,58 @@
         <ul id="productSpecs" class="detail-specs"></ul>
       </div>
     </section>
+
+    <section id="relatedProductsSection" class="related-products-section" aria-label="Sản phẩm liên quan">
+      <div class="section-title-row">
+        <h2 class="section-title">Sản phẩm liên quan</h2>
+        <a class="showcase-view-all" href="san-pham.html">
+          <span>Xem tất cả</span>
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </a>
+      </div>
+      <div id="relatedProductGrid" class="product-grid related-product-grid"></div>
+    </section>
   </main>
 
-  <footer class="site-footer">
+  <footer class="site-footer footer-compact">
     <div class="container">
-      <small>© 2026 Mỹ Phẩm Thái Nguyên. Affiliate Shopee.</small>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Dịch vụ khách hàng</h4>
+          <a href="trung-tam-tro-giup.html">Trung tâm trợ giúp</a>
+          <a href="huong-dan-mua-hang.html">Hướng dẫn mua hàng</a>
+          <a href="doi-tra-hoan-tien.html">Đổi trả & hoàn tiền</a>
+          <a href="lien-he-ho-tro.html">Liên hệ hỗ trợ</a>
+        </div>
+        <div class="footer-col">
+          <h4>Mỹ Phẩm Thái Nguyên</h4>
+          <a href="ve-chung-toi.html">Về chúng tôi</a>
+          <a href="dieu-khoan-su-dung.html">Điều khoản sử dụng</a>
+          <a href="chinh-sach-bao-mat.html">Chính sách bảo mật</a>
+          <a href="kenh-nguoi-ban.html">Kênh người bán</a>
+        </div>
+        <div class="footer-col">
+          <h4>Thanh toán</h4>
+          <div class="footer-badges">
+            <span>VISA</span><span>MasterCard</span><span>ATM</span><span>COD</span>
+          </div>
+          <h4>Đơn vị vận chuyển</h4>
+          <div class="footer-badges">
+            <span>SPX</span><span>GHTK</span><span>J&T</span><span>Viettel</span>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Theo dõi</h4>
+          <a href="#" rel="noopener nofollow">Facebook</a>
+          <a href="#" rel="noopener nofollow">Instagram</a>
+          <a href="#" rel="noopener nofollow">TikTok</a>
+          <a href="#" rel="noopener nofollow">YouTube</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <small>© 2026 Mỹ Phẩm Thái Nguyên. Tất cả các quyền được bảo lưu.</small>
+        <small>Website tổng hợp ưu đãi mỹ phẩm chính hãng, cập nhật liên tục mỗi ngày.</small>
+      </div>
     </div>
   </footer>
 
@@ -125,7 +199,7 @@
       <span class="material-icons" aria-hidden="true">local_fire_department</span>
       <span class="label">Sale</span>
     </a>
-    <a href="index.html#menu" data-route="menu danh-muc category" aria-label="Menu danh mục">
+    <a href="#menu" data-route="menu danh-muc category" data-open-category="1" aria-label="Menu danh mục">
       <span class="material-icons" aria-hidden="true">menu</span>
       <span class="label">Menu</span>
     </a>

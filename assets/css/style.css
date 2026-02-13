@@ -849,18 +849,59 @@ body {
   padding: 16px 0 24px;
 }
 
+.product-hero--compact {
+  background: linear-gradient(135deg, #ff724f 0%, #ee4d2d 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(238, 77, 45, 0.2);
+}
+
+.product-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  opacity: 0.95;
+}
+
+.product-hero__chip .material-icons {
+  font-size: 1.1rem;
+}
+
+.related-products-section {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.related-products-section .product-grid {
+  margin-bottom: 0;
+}
+
 .product-breadcrumb {
-  margin-bottom: 12px;
-  color: #64748b;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.product-breadcrumb a {
-  color: #0f172a;
+.product-hero--compact .product-breadcrumb a {
+  color: #fff;
   text-decoration: none;
+}
+
+.product-hero--compact .product-breadcrumb a:hover {
+  opacity: 0.9;
+}
+
+.product-hero--compact .product-breadcrumb span {
+  opacity: 0.85;
 }
 
 .product-shell {
