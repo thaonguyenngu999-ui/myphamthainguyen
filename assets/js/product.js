@@ -197,7 +197,9 @@ function getMediaList(product) {
   return media.length ? media : [{ type: "image", url: FALLBACK_IMAGE }];
 }
 
-function renderViewer(mediaItem) {
+function renderViewerByIndex(index) {
+  const mediaItem = currentMediaList[index];
+  if (!mediaItem) return;
   const imageSlot = document.getElementById("viewerImageSlot");
   if (mediaItem.type === "video") {
     if (imageSlot) imageSlot.classList.add("hidden");
@@ -254,7 +256,7 @@ function showMediaAt(index) {
   if (!currentMediaList.length) return;
   const normalizedIndex = (index + currentMediaList.length) % currentMediaList.length;
   currentMediaIndex = normalizedIndex;
-  renderViewer(currentMediaList[normalizedIndex]);
+  renderViewerByIndex(normalizedIndex);
   setActiveThumb(normalizedIndex);
 }
 
@@ -271,7 +273,7 @@ function renderMediaGallery(product) {
   currentMediaList = mediaList;
   currentMediaIndex = 0;
   viewerThumbs.innerHTML = "";
-  renderViewer(mediaList[0]);
+  renderViewerByIndex(0);
 
   mediaList.forEach((item, index) => {
     const btn = document.createElement("button");
@@ -290,8 +292,12 @@ function renderMediaGallery(product) {
     btn.addEventListener("click", function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
-      const i = parseInt(this.dataset.index, 10);
-      if (!Number.isNaN(i)) showMediaAt(i);
+      ev.stopImmediatePropagation();
+      const btnEl = ev.currentTarget;
+      const i = parseInt(btnEl.getAttribute("data-index"), 10);
+      if (!Number.isNaN(i) && i >= 0 && i < mediaList.length) {
+        showMediaAt(i);
+      }
     });
 
     viewerThumbs.appendChild(btn);
@@ -309,6 +315,7 @@ function bindMediaNavigation() {
 
   detailViewer?.addEventListener("mouseup", (event) => {
     if (!isPointerDown || pointerStartX === null) return;
+    if (event.target.closest?.("button")) return;
     const delta = event.clientX - pointerStartX;
     if (Math.abs(delta) > 45) {
       if (delta < 0) showNextMedia();
