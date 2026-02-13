@@ -19,7 +19,7 @@
   <script src="assets/js/seo-global.js?v=20260211"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="assets/css/style.css?v=20260211" />
+  <link rel="stylesheet" href="assets/css/style.css?v=20260217" />
 </head>
 <body class="product-page">
   <header class="site-header">
@@ -111,7 +111,7 @@
   </nav>
 
   <script id="productJsonLd" type="application/ld+json">{}</script>
-  <script src="assets/js/product.js?v=20260216" defer></script>
+  <script src="assets/js/product.js?v=20260217" defer></script>
   <script>
     (function productInlineFallback() {
       function slugify(value) {
@@ -148,7 +148,8 @@
           oldPrice: Number(item.oldPrice) || 0,
           discount: Number(item.discount) || 0,
           affiliateLink: String(item.affiliateLink || "#"),
-          description: String(item.description || "Đang cập nhật mô tả sản phẩm.")
+          description: String(item.description || "Đang cập nhật mô tả sản phẩm."),
+          specs: Array.isArray(item.specs) ? item.specs.filter(Boolean) : []
         };
       }
       function shouldRunFallback() {
@@ -189,6 +190,7 @@
         const discountEl = document.getElementById("productDiscount");
         const descEl = document.getElementById("productDescription");
         const detailEl = document.getElementById("productDetails");
+        const specsEl = document.getElementById("productSpecs");
         const buyBtn = document.getElementById("buyNowBtn");
         if (nameEl) nameEl.textContent = product.name;
         if (imageEl) {
@@ -200,7 +202,16 @@
         if (discountEl) discountEl.textContent = product.discount ? `-${product.discount}%` : "";
         if (descEl) descEl.textContent = product.description;
         if (detailEl) detailEl.textContent = product.description;
+        if (specsEl) {
+          const specs = product.specs.length
+            ? product.specs
+            : ["Thông tin chi tiết đang được cập nhật."];
+          specsEl.innerHTML = specs.map(function (spec) {
+            return "<li>" + String(spec).replaceAll("<", "&lt;").replaceAll(">", "&gt;") + "</li>";
+          }).join("");
+        }
         if (buyBtn) {
+          buyBtn.classList.remove("hidden");
           buyBtn.onclick = function () {
             window.open(product.affiliateLink, "_blank", "noopener");
           };

@@ -436,6 +436,7 @@ function renderProduct(product) {
   breadcrumbNameEl.textContent = product.name;
   renderMediaGallery(product);
   updateSeo(product);
+  buyNowBtn.classList.remove("hidden");
 
   buyNowBtn.addEventListener("click", () => {
     const tracked = withAffiliateTracking(product.affiliateLink);

@@ -574,6 +574,13 @@ body {
   font-size: 0.92rem;
 }
 
+.detail-info h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.1vw, 2.05rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+
 .detail-body {
   margin-top: 14px;
   border-top: 1px solid #e5e7eb;
@@ -2321,6 +2328,11 @@ body {
   .home-page .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+  }
+
+  .detail-info h1 {
+    font-size: 1.38rem;
+    line-height: 1.28;
   }
 
   .admin-publish-grid {
