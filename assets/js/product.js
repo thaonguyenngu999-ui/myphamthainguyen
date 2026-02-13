@@ -73,6 +73,13 @@ function getProductsDataUrl() {
   return `${base}/assets/data/products.json`;
 }
 
+function getProductsDataUrlCandidates() {
+  const fromBase = getProductsDataUrl();
+  const absolute = `${location.origin}/assets/data/products.json`;
+  const relative = "assets/data/products.json";
+  return [...new Set([fromBase, absolute, relative])];
+}
+
 function buildPrettyProductPath(slug) {
   const safeSlug = createProductSlug(slug);
   const base = getBasePathFromCurrentPage();
@@ -457,10 +464,18 @@ async function loadProducts() {
     }
   }
   try {
-    const res = await fetch(getProductsDataUrl());
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return Array.isArray(data) ? data.map(normalizeProduct) : [];
+    const candidates = getProductsDataUrlCandidates();
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (Array.isArray(data)) return data.map(normalizeProduct);
+      } catch {
+        // try next candidate URL
+      }
+    }
+    throw new Error("Cannot fetch products data from all candidates.");
   } catch {
     return localProducts;
   }
