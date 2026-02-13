@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chi tiết sản phẩm | Mỹ Phẩm Thái Nguyên</title>
+  <meta id="metaDescription" name="description" content="Chi tiết sản phẩm tại Mỹ Phẩm Thái Nguyên." />
+  <meta property="og:title" content="Chi tiết sản phẩm" />
+  <meta property="og:description" content="Xem chi tiết sản phẩm và mua nhanh qua link affiliate." />
+  <meta property="og:type" content="product" />
+  <meta id="ogImage" property="og:image" content="https://placehold.co/600x600?text=My+Pham" />
+  <link id="canonicalLink" rel="canonical" href="product.html" />
+  <script src="assets/js/seo-config.js"></script>
+  <script src="assets/js/seo-global.js"></script>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="product-page">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html">Mỹ Phẩm Thái Nguyên</a>
+      <nav class="header-actions">
+        <a href="index.html">Trang chu</a>
+        <a href="admin.html">Dang ky / Dang nhap</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container product-main">
+    <nav class="product-breadcrumb">
+      <a href="index.html">Trang chu</a>
+      <span>/</span>
+      <span id="breadcrumbCategory">Danh muc</span>
+      <span>/</span>
+      <span id="breadcrumbName">San pham</span>
+    </nav>
+
+    <section class="product-shell">
+      <div class="detail-top">
+        <div class="detail-media">
+          <div class="detail-viewer">
+            <button id="prevMediaBtn" class="viewer-nav prev" type="button" aria-label="Ảnh trước">‹</button>
+            <button id="nextMediaBtn" class="viewer-nav next" type="button" aria-label="Ảnh sau">›</button>
+            <img id="viewerImage" src="" alt="" />
+            <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
+            <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
+              <span class="material-icons" aria-hidden="true">play_arrow</span>
+            </button>
+          </div>
+          <div id="viewerThumbs" class="detail-thumbs"></div>
+        </div>
+
+        <div class="detail-info">
+          <h1 id="productName">Ten san pham</h1>
+          <div class="detail-rating-row">
+            <span id="productSold">Da ban 0</span>
+            <span id="productCategory" class="category-pill"></span>
+          </div>
+          <div class="detail-price-row">
+            <span id="productCurrentPrice" class="current-price"></span>
+            <span id="productOldPrice" class="old-price"></span>
+            <span id="productDiscount" class="detail-discount"></span>
+          </div>
+          <p id="productDescription" class="detail-short-desc"></p>
+
+          <div class="product-actions">
+            <button id="buyNowBtn" class="btn-buy-now" type="button" aria-label="Mua ngay sản phẩm">Mua ngay</button>
+            <a class="btn-more back-btn" href="san-pham.html" aria-label="Xem thêm sản phẩm">Xem thêm sản phẩm</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <h2>Mô tả sản phẩm</h2>
+        <p id="productDetails" class="detail-long-desc"></p>
+        <h2>Thông số nổi bật</h2>
+        <ul id="productSpecs" class="detail-specs"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>© 2026 Mỹ Phẩm Thái Nguyên. Affiliate Shopee.</small>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Điều hướng dưới">
+    <a href="index.html" data-route="index.html /" aria-label="Trang chủ">
+      <span class="material-icons" aria-hidden="true">home</span>
+      <span class="label">Trang chủ</span>
+    </a>
+    <a href="san-pham.html" data-route="san-pham products" aria-label="Sản phẩm">
+      <span class="material-icons" aria-hidden="true">shopping_bag</span>
+      <span class="label">Sản phẩm</span>
+    </a>
+    <a href="sale.html" data-route="sale" aria-label="Sale" class="sale-item">
+      <span class="material-icons" aria-hidden="true">local_fire_department</span>
+      <span class="label">Sale</span>
+    </a>
+    <a href="index.html#menu" data-route="menu danh-muc category" aria-label="Menu danh mục">
+      <span class="material-icons" aria-hidden="true">menu</span>
+      <span class="label">Menu</span>
+    </a>
+  </nav>
+
+  <script id="productJsonLd" type="application/ld+json">{}</script>
+  <script src="assets/js/product.js" defer></script>
+</body>
+</html>

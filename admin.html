@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập tài khoản | Mỹ Phẩm Thái Nguyên</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html">Mỹ Phẩm Thái Nguyên</a>
+      <nav>
+        <a class="admin-link" href="index.html">Trang chủ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container admin-page">
+    <section id="authGate" class="auth-gate">
+      <div class="auth-card auth-card--pro">
+        <div class="auth-head">
+          <h1>Đăng nhập hệ thống</h1>
+          <p>Chọn loại tài khoản phù hợp để tiếp tục.</p>
+        </div>
+
+        <div class="role-switch" role="tablist" aria-label="Loại tài khoản">
+          <button id="adminRoleBtn" class="role-chip active" type="button" data-role="admin" role="tab" aria-selected="true">
+            <span class="material-icons" aria-hidden="true">admin_panel_settings</span>
+            <span>Admin</span>
+          </button>
+          <button id="userRoleBtn" class="role-chip" type="button" data-role="user" role="tab" aria-selected="false">
+            <span class="material-icons" aria-hidden="true">person</span>
+            <span>Tài khoản thường</span>
+          </button>
+        </div>
+
+        <p id="roleHint" class="role-hint">Tài khoản Admin có quyền quản lý sản phẩm, import/export dữ liệu.</p>
+
+        <div id="socialAuthWrap" class="social-auth-wrap hidden" aria-label="Đăng nhập nhanh">
+          <div class="social-auth-grid">
+            <button id="googleLoginBtn" class="social-btn social-btn--google" type="button">
+              <span class="material-icons" aria-hidden="true">g_mobiledata</span>
+              <span>Đăng nhập Google</span>
+            </button>
+            <button id="facebookLoginBtn" class="social-btn social-btn--facebook" type="button">
+              <span class="material-icons" aria-hidden="true">facebook</span>
+              <span>Đăng nhập Facebook</span>
+            </button>
+          </div>
+          <p class="social-auth-note">Đăng nhập nhanh dành cho tài khoản thường.</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button id="loginTabBtn" class="auth-tab active" type="button">Đăng nhập</button>
+          <button id="registerTabBtn" class="auth-tab" type="button">Đăng ký</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+          <input id="loginRole" type="hidden" value="admin" />
+          <div class="form-group">
+            <label for="loginUsername">Tên đăng nhập</label>
+            <input id="loginUsername" type="text" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Mật khẩu</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="btn-primary auth-btn" type="submit">Đăng nhập</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden">
+          <input id="registerRole" type="hidden" value="admin" />
+          <div class="form-group">
+            <label for="registerUsername">Tên đăng nhập mới</label>
+            <input id="registerUsername" type="text" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">Mật khẩu mới</label>
+            <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required />
+          </div>
+          <button class="btn-primary auth-btn" type="submit">Tạo tài khoản</button>
+        </form>
+
+        <p id="authMessage" class="auth-message"></p>
+      </div>
+    </section>
+
+    <section id="adminDashboard" class="hidden">
+      <section class="admin-header">
+        <h1>Bảng điều khiển sản phẩm</h1>
+        <p>Thêm / sửa / xóa sản phẩm và lưu bằng localStorage.</p>
+        <div class="admin-actions">
+          <button id="exportBtn" class="btn-outline">Export JSON</button>
+          <button id="importBtn" class="btn-outline">Import JSON</button>
+          <button id="logoutBtn" class="btn-outline">Đăng xuất</button>
+          <input id="importFileInput" type="file" accept=".json,application/json" hidden />
+        </div>
+      </section>
+
+      <section class="admin-analytics-wrap">
+        <h2>Thống kê click affiliate</h2>
+        <div class="analytics-cards">
+          <article class="analytics-card">
+            <span>Tổng lượt click</span>
+            <strong id="affiliateTotalClicks">0</strong>
+          </article>
+          <article class="analytics-card">
+            <span>7 ngày gần nhất</span>
+            <strong id="affiliate7dClicks">0</strong>
+          </article>
+          <article class="analytics-card">
+            <span>Nguồn nhiều nhất</span>
+            <strong id="affiliateTopSource">-</strong>
+          </article>
+        </div>
+        <div class="table-wrap">
+          <table class="product-table analytics-table">
+            <thead>
+              <tr>
+                <th>Top sản phẩm</th>
+                <th>Lượt click</th>
+                <th>Nguồn chính</th>
+                <th>Lần gần nhất</th>
+              </tr>
+            </thead>
+            <tbody id="affiliateTopProductsBody">
+              <tr><td colspan="4">Chưa có dữ liệu click.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-blog-wrap">
+        <h2>Quản trị Blog / Review / FAQ</h2>
+        <div class="form-grid">
+          <form id="blogPostForm" class="admin-form" novalidate>
+            <input type="hidden" id="blogPostId" />
+            <h3>Bài viết ngắn</h3>
+            <div class="form-group">
+              <label for="blogTitle">Tiêu đề</label>
+              <input id="blogTitle" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="blogSummary">Tóm tắt</label>
+              <textarea id="blogSummary" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="blogUrl">Link đích</label>
+              <input id="blogUrl" type="text" placeholder="san-pham/chong-nang.html" required />
+            </div>
+            <div class="form-group">
+              <label for="blogTag">Tag hiển thị</label>
+              <input id="blogTag" type="text" placeholder="Chống nắng" />
+            </div>
+            <div class="form-group">
+              <label for="blogCtaText">Nút CTA</label>
+              <input id="blogCtaText" type="text" placeholder="Xem danh mục" />
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn-primary">Lưu bài viết</button>
+              <button type="button" id="resetBlogPostBtn" class="btn-outline">Làm mới</button>
+            </div>
+          </form>
+
+          <form id="faqForm" class="admin-form" novalidate>
+            <input type="hidden" id="faqId" />
+            <h3>FAQ</h3>
+            <div class="form-group">
+              <label for="faqQuestion">Câu hỏi</label>
+              <input id="faqQuestion" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="faqAnswer">Trả lời</label>
+              <textarea id="faqAnswer" rows="6" required></textarea>
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn-primary">Lưu FAQ</button>
+              <button type="button" id="resetFaqBtn" class="btn-outline">Làm mới</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="table-wrap">
+          <table class="product-table analytics-table">
+            <thead>
+              <tr>
+                <th>Bài viết</th>
+                <th>Tag</th>
+                <th>Link</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="blogPostTableBody">
+              <tr><td colspan="4">Chưa có bài viết.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 12px;">
+          <table class="product-table analytics-table">
+            <thead>
+              <tr>
+                <th>FAQ</th>
+                <th>Trả lời</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="faqTableBody">
+              <tr><td colspan="3">Chưa có FAQ.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-form-wrap">
+        <h2>Form sản phẩm</h2>
+        <form id="productForm" class="admin-form" novalidate>
+          <input type="hidden" id="productId" />
+          <input type="hidden" id="existingImages" />
+          <input type="hidden" id="existingVideo" />
+
+          <div class="form-group">
+            <label for="name">Tên sản phẩm *</label>
+            <input id="name" type="text" required />
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="imageUrls">Danh sách ảnh URL (mỗi dòng 1 link)</label>
+              <textarea id="imageUrls" rows="4" placeholder="https://..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="imageFile">Upload nhiều ảnh</label>
+              <input id="imageFile" type="file" accept="image/*" multiple />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="videoUrl">Video URL (mp4/webm)</label>
+              <input id="videoUrl" type="url" placeholder="https://...mp4" />
+            </div>
+            <div class="form-group">
+              <label for="videoFile">Hoặc upload video ngắn (khuyên dùng URL)</label>
+              <input id="videoFile" type="file" accept="video/mp4,video/webm" />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="currentPrice">Giá hiện tại (VNĐ) *</label>
+              <input id="currentPrice" type="number" min="0" required />
+            </div>
+            <div class="form-group">
+              <label for="oldPrice">Giá cũ (VNĐ) *</label>
+              <input id="oldPrice" type="number" min="0" required />
+            </div>
+            <div class="form-group">
+              <label for="discount">Giảm giá (%) *</label>
+              <input id="discount" type="number" min="0" max="99" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="affiliateLink">Affiliate Link *</label>
+            <input id="affiliateLink" type="url" required placeholder="https://shope.ee/xxxx" />
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="category">Danh mục *</label>
+              <select id="category" required>
+                <option value="Chăm sóc da">Chăm sóc da</option>
+                <option value="Trang điểm">Trang điểm</option>
+                <option value="Chăm sóc tóc">Chăm sóc tóc</option>
+                <option value="Cơ thể">Cơ thể</option>
+                <option value="Ngành khác">Ngành khác</option>
+                <option value="Bộ sản phẩm">Bộ sản phẩm</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="subCategory">Danh mục con *</label>
+              <select id="subCategory" required>
+                <option value="Tẩy trang">Tẩy trang</option>
+                <option value="Rửa mặt">Rửa mặt</option>
+                <option value="Toner - xịt khoáng">Toner - xịt khoáng</option>
+                <option value="Serum">Serum</option>
+                <option value="Kem dưỡng">Kem dưỡng</option>
+                <option value="Kem chống nắng">Kem chống nắng</option>
+                <option value="Mặt nạ">Mặt nạ</option>
+                <option value="Son môi">Son môi</option>
+                <option value="Phấn nền">Phấn nền</option>
+                <option value="Mascara">Mascara</option>
+                <option value="Gội xả">Gội xả</option>
+                <option value="Dưỡng tóc">Dưỡng tóc</option>
+                <option value="Sữa tắm">Sữa tắm</option>
+                <option value="Dưỡng thể">Dưỡng thể</option>
+                <option value="Phụ kiện">Phụ kiện</option>
+                <option value="Combo khác">Combo khác</option>
+                <option value="Bộ dưỡng ẩm">Bộ dưỡng ẩm</option>
+                <option value="Bộ phục hồi">Bộ phục hồi</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="tags">Tags (phân tách bằng dấu phẩy)</label>
+              <input id="tags" type="text" placeholder="sale, hot, organic" />
+            </div>
+            <div class="form-group">
+              <label for="description">Mô tả ngắn *</label>
+              <input id="description" type="text" maxlength="200" required />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="details">Mô tả chi tiết (hiển thị ở trang chi tiết)</label>
+              <textarea id="details" rows="5" placeholder="Mô tả dài..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="specs">Thông số (mỗi dòng 1 ý)</label>
+              <textarea id="specs" rows="5" placeholder="- Dung tích: ..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button type="submit" class="btn-primary">Lưu thay đổi</button>
+            <button type="button" id="resetFormBtn" class="btn-outline">Làm mới form</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-list-wrap">
+        <h2>Danh sách sản phẩm</h2>
+        <div class="table-wrap">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Ảnh</th>
+                <th>Tên</th>
+                <th>Giá</th>
+                <th>Giảm</th>
+                <th>Danh mục</th>
+                <th>Link</th>
+                <th>Mô tả</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="adminProductTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Điều hướng dưới">
+    <a href="index.html" data-route="index.html /" aria-label="Trang chủ">
+      <span class="material-icons" aria-hidden="true">home</span>
+      <span class="label">Trang chủ</span>
+    </a>
+    <a href="san-pham.html" data-route="san-pham products" aria-label="Sản phẩm">
+      <span class="material-icons" aria-hidden="true">shopping_bag</span>
+      <span class="label">Sản phẩm</span>
+    </a>
+    <a href="sale.html" data-route="sale" aria-label="Sale" class="sale-item">
+      <span class="material-icons" aria-hidden="true">local_fire_department</span>
+      <span class="label">Sale</span>
+    </a>
+    <a href="index.html#menu" data-route="menu danh-muc category" aria-label="Menu danh mục">
+      <span class="material-icons" aria-hidden="true">menu</span>
+      <span class="label">Menu</span>
+    </a>
+  </nav>
+
+  <script src="assets/js/admin.js" defer></script>
+</body>
+</html>

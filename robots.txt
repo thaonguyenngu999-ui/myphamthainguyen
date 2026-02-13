@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+
+Sitemap: https://your-username.github.io/my-pham-thai-nguyen/sitemap.xml

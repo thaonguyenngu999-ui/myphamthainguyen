@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sale Mỹ Phẩm Thái Nguyên - Giảm giá hấp dẫn</title>
+  <meta name="description" content="Sale Mỹ Phẩm Thái Nguyên: tổng hợp deal giảm giá hấp dẫn, ưu tiên sản phẩm discount cao và tag sale hot." />
+  <meta name="keywords" content="sale mỹ phẩm, deal shopee mỹ phẩm, giảm giá mỹ phẩm, hot sale" />
+  <meta property="og:title" content="Sale Mỹ Phẩm Thái Nguyên - Giảm giá hấp dẫn" />
+  <meta property="og:description" content="Săn deal mỹ phẩm giảm sâu, cập nhật nhanh theo mức giảm giá." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="vi_VN" />
+  <link id="canonicalLink" rel="canonical" href="sale.html" />
+  <script src="assets/js/seo-config.js"></script>
+  <script src="assets/js/seo-global.js"></script>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="home-page category-page" data-page-type="sale">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html">Mỹ Phẩm Thái Nguyên</a>
+      <div class="header-search">
+        <input id="searchInput" type="text" placeholder="Tìm deal sale..." aria-label="Tìm sản phẩm sale" />
+        <button id="searchBtn" type="button">Tìm kiếm</button>
+      </div>
+      <nav class="header-actions">
+        <a id="adminEntry" class="admin-link" href="admin.html">Đăng ký / Đăng nhập</a>
+        <button id="openCategoryDrawer" class="category-toggle-btn" type="button" aria-controls="categorySidebar" aria-expanded="false">
+          <span class="material-icons" aria-hidden="true">menu</span>
+          <span>Danh mục</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div id="categoryBackdrop" class="category-backdrop" hidden></div>
+  <aside id="categorySidebar" class="category-sidebar" aria-label="Danh mục sản phẩm">
+    <div class="category-sidebar__head">
+      <h2>Danh mục</h2>
+      <button id="closeCategoryDrawer" class="category-close-btn" type="button" aria-label="Đóng danh mục">
+        <span class="material-icons" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="catalog-side-filters">
+      <label for="priceFilter">Lọc theo giá</label>
+      <select id="priceFilter">
+        <option value="all">Tất cả mức giá</option>
+        <option value="under-200">Dưới 200.000đ</option>
+        <option value="200-500">200.000đ - 500.000đ</option>
+        <option value="over-500">Trên 500.000đ</option>
+      </select>
+      <label for="brandFilter">Lọc theo thương hiệu</label>
+      <select id="brandFilter">
+        <option value="all">Tất cả thương hiệu</option>
+      </select>
+      <p id="resultCount" class="catalog-filter-count">Đang hiển thị 0 sản phẩm</p>
+    </div>
+    <nav class="category-nav" aria-label="Điều hướng danh mục">
+      <ul id="categoryAccordion" class="category-accordion"></ul>
+    </nav>
+  </aside>
+
+  <main class="container catalog-main">
+    <nav class="catalog-breadcrumb">
+      <a href="index.html">Trang chủ</a>
+      <span>/</span>
+      <a id="breadcrumbParent" href="sale.html">Sale</a>
+      <span>/</span>
+      <span id="breadcrumbCurrent">Tất cả</span>
+    </nav>
+    <section class="catalog-hero sale-hero">
+      <h1>Sale Mỹ Phẩm Thái Nguyên - Giảm giá hấp dẫn</h1>
+      <p id="catalogLead">Sản phẩm giảm giá theo mức discount cao nhất, ưu tiên tag sale/hot.</p>
+    </section>
+    <section id="catalogGrid" class="product-grid catalog-grid"></section>
+    <p id="catalogEmpty" class="empty-state hidden">Chưa có sản phẩm sale phù hợp.</p>
+    <div class="catalog-actions">
+      <button id="loadMoreBtn" class="btn-outline hidden" type="button">Xem thêm sản phẩm</button>
+    </div>
+  </main>
+
+  <footer class="site-footer footer-compact">
+    <div class="container">
+      <div class="footer-bottom">
+        <small>© 2026 Mỹ Phẩm Thái Nguyên.</small>
+        <small>Deal Sale cập nhật theo dữ liệu products.json.</small>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Điều hướng dưới">
+    <a href="index.html" data-route="index.html /" aria-label="Trang chủ">
+      <span class="material-icons" aria-hidden="true">home</span>
+      <span class="label">Trang chủ</span>
+    </a>
+    <a href="san-pham.html" data-route="san-pham products" aria-label="Sản phẩm">
+      <span class="material-icons" aria-hidden="true">shopping_bag</span>
+      <span class="label">Sản phẩm</span>
+    </a>
+    <a href="sale.html" data-route="sale" aria-label="Sale" class="sale-item">
+      <span class="material-icons" aria-hidden="true">local_fire_department</span>
+      <span class="label">Sale</span>
+    </a>
+    <a href="#menu" data-route="menu danh-muc category" data-open-category="1" aria-label="Menu danh mục">
+      <span class="material-icons" aria-hidden="true">menu</span>
+      <span class="label">Menu</span>
+    </a>
+  </nav>
+
+  <script id="catalogJsonLd" type="application/ld+json">{}</script>
+  <script src="assets/js/category-pages.js" defer></script>
+</body>
+</html>
