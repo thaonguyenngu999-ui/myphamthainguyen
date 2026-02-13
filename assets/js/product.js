@@ -23,7 +23,13 @@ const breadcrumbCategoryEl = document.getElementById("breadcrumbCategory");
 const breadcrumbNameEl = document.getElementById("breadcrumbName");
 const canonicalLink = document.getElementById("canonicalLink");
 const metaDescription = document.getElementById("metaDescription");
+const ogTitle = document.getElementById("ogTitle");
+const ogDescription = document.getElementById("ogDescription");
+const ogUrl = document.getElementById("ogUrl");
 const ogImage = document.getElementById("ogImage");
+const twitterTitle = document.getElementById("twitterTitle");
+const twitterDescription = document.getElementById("twitterDescription");
+const twitterImage = document.getElementById("twitterImage");
 const productJsonLd = document.getElementById("productJsonLd");
 
 let currentMediaList = [];
@@ -38,6 +44,41 @@ function formatVnd(value) {
     style: "currency",
     currency: "VND"
   }).format(Number(value) || 0);
+}
+
+function slugify(value) {
+  return String(value || "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function createProductSlug(value) {
+  const base = slugify(value).slice(0, 60).replace(/-+$/g, "");
+  return base || "san-pham";
+}
+
+function getBasePathFromCurrentPage() {
+  const noProductPage = location.pathname.replace(/\/product\.html$/i, "");
+  const prettyMatch = noProductPage.match(/^(.*)\/san-pham\/[^/]+\/?$/i);
+  const base = prettyMatch ? prettyMatch[1] : noProductPage;
+  return base.replace(/\/$/, "");
+}
+
+function buildPrettyProductPath(slug) {
+  const safeSlug = createProductSlug(slug);
+  const base = getBasePathFromCurrentPage();
+  return `${base}/san-pham/${encodeURIComponent(safeSlug)}`;
+}
+
+function getSlugFromPath() {
+  const match = location.pathname.match(/\/san-pham\/([^/?#]+)/i);
+  if (!match) return "";
+  return decodeURIComponent(match[1] || "").trim();
 }
 
 function estimateSold(id) {
@@ -97,6 +138,7 @@ function normalizeProduct(product) {
 
   return {
     id: product.id || "",
+    slug: createProductSlug(product.slug || product.name || product.id || "san-pham"),
     name: product.name || "Sản phẩm",
     images,
     videoUrl: product.videoUrl || product.video || "",
@@ -258,17 +300,22 @@ function bindMediaNavigation() {
 }
 
 function updateSeo(product) {
-  const title = `${product.name} | My Pham Thai Nguyen`;
-  const description = product.description || `Mua ${product.name} gia tot tai My Pham Thai Nguyen.`;
+  const title = `${product.name} | Mỹ Phẩm Thái Nguyên`;
+  const shortPrice = formatVnd(product.currentPrice);
+  const description = `${shortPrice} • Giảm ${Math.max(Number(product.discount) || 0, 0)}% • ${product.description || `Deal tốt cho ${product.name}`}`.trim();
   const image = product.images[0] || FALLBACK_IMAGE;
-  const canonical = `${location.origin}${location.pathname}?id=${encodeURIComponent(product.id)}`;
+  const canonical = `${location.origin}${buildPrettyProductPath(product.slug)}`;
 
   document.title = title;
   metaDescription.setAttribute("content", description);
   canonicalLink.setAttribute("href", canonical);
-  document.querySelector('meta[property="og:title"]')?.setAttribute("content", title);
-  document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+  ogTitle?.setAttribute("content", title);
+  ogDescription?.setAttribute("content", description);
+  ogUrl?.setAttribute("content", canonical);
   ogImage.setAttribute("content", image);
+  twitterTitle?.setAttribute("content", title);
+  twitterDescription?.setAttribute("content", description);
+  twitterImage?.setAttribute("content", image);
 
   const ld = {
     "@context": "https://schema.org",
@@ -282,7 +329,7 @@ function updateSeo(product) {
       priceCurrency: "VND",
       price: product.currentPrice,
       availability: "https://schema.org/InStock",
-      url: product.affiliateLink
+      url: canonical
     }
   };
   productJsonLd.textContent = JSON.stringify(ld, null, 2);
@@ -391,18 +438,30 @@ async function loadProducts() {
 async function init() {
   initBottomNavActive();
   bindMediaNavigation();
-  const id = new URLSearchParams(location.search).get("id");
-  if (!id) {
+  const params = new URLSearchParams(location.search);
+  const slugFromPath = createProductSlug(getSlugFromPath());
+  const slugFromQuery = createProductSlug(params.get("slug") || "");
+  const idFromQuery = params.get("id");
+  const targetSlug = slugFromPath || slugFromQuery;
+  if (!targetSlug && !idFromQuery) {
     renderNotFound();
     return;
   }
 
   try {
     const products = await loadProducts();
-    const product = products.find((item) => String(item.id) === String(id));
+    const product = products.find((item) => {
+      if (targetSlug && item.slug === targetSlug) return true;
+      if (idFromQuery && String(item.id) === String(idFromQuery)) return true;
+      return false;
+    });
     if (!product) {
       renderNotFound();
       return;
+    }
+    const prettyPath = buildPrettyProductPath(product.slug);
+    if (location.pathname !== prettyPath || location.search) {
+      history.replaceState(null, "", prettyPath);
     }
     renderProduct(product);
   } catch (error) {

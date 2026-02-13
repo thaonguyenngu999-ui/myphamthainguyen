@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đang chuyển hướng...</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <script>
+    (function redirectPrettyProductPath() {
+      var pathname = window.location.pathname || "";
+      var match = pathname.match(/^(.*)\/san-pham\/([^/?#]+)\/?$/i);
+      if (match) {
+        var basePath = match[1] || "";
+        var slug = match[2] || "";
+        var target = (basePath || "") + "/product.html?slug=" + encodeURIComponent(decodeURIComponent(slug));
+        window.location.replace(target);
+        return;
+      }
+      window.location.replace((window.location.pathname || "/").replace(/\/404\.html$/i, "/index.html"));
+    }());
+  </script>
+</body>
+</html>

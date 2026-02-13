@@ -199,6 +199,33 @@ function formatVnd(value) {
   }).format(Number(value) || 0);
 }
 
+function slugify(value) {
+  return String(value || "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function createProductSlug(value) {
+  const base = slugify(value).slice(0, 60).replace(/-+$/g, "");
+  return base || "san-pham";
+}
+
+function ensureUniqueSlugs(items = []) {
+  const used = new Map();
+  return items.map((item) => {
+    const base = createProductSlug(item.slug || item.name || item.id || "san-pham");
+    const count = used.get(base) || 0;
+    used.set(base, count + 1);
+    const slug = count === 0 ? base : `${base}-${count + 1}`;
+    return { ...item, slug };
+  });
+}
+
 function normalizeTags(tags) {
   if (Array.isArray(tags)) {
     return tags.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean);
@@ -354,6 +381,7 @@ function normalizeProduct(product) {
 
   return {
     id: product.id || makeId(),
+    slug: createProductSlug(product.slug || product.name || product.id || "san-pham"),
     name: product.name || "",
     image: images[0] || FALLBACK_IMAGE,
     images,
@@ -610,7 +638,8 @@ async function loadProducts() {
     try {
       const parsed = JSON.parse(localData);
       if (Array.isArray(parsed)) {
-        products = parsed.map(normalizeProduct);
+        products = ensureUniqueSlugs(parsed.map(normalizeProduct));
+        saveProductsToLocal();
         return;
       }
     } catch {
@@ -622,10 +651,10 @@ async function loadProducts() {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    products = Array.isArray(data) ? data.map(normalizeProduct) : [];
+    products = Array.isArray(data) ? ensureUniqueSlugs(data.map(normalizeProduct)) : [];
   } catch {
     // Neu mo local file:// hoac host loi, van co du lieu de admin su dung
-    products = FALLBACK_PRODUCTS.map(normalizeProduct);
+    products = ensureUniqueSlugs(FALLBACK_PRODUCTS.map(normalizeProduct));
   }
 
   saveProductsToLocal();
@@ -883,6 +912,7 @@ function fillFormForEdit(product) {
 }
 
 function collectFormData() {
+  const editingProduct = products.find((item) => item.id === productIdInput.value);
   let existingImages = [];
   try {
     existingImages = JSON.parse(existingImagesInput.value || "[]");
@@ -908,6 +938,7 @@ function collectFormData() {
 
   return normalizeProduct({
     id: productIdInput.value || makeId(),
+    slug: editingProduct?.slug || "",
     name: nameInput.value.trim(),
     image: uniqueImages[0],
     images: uniqueImages,
@@ -947,6 +978,7 @@ function upsertProduct(product) {
   const index = products.findIndex((p) => p.id === product.id);
   if (index >= 0) products[index] = product;
   else products.unshift(product);
+  products = ensureUniqueSlugs(products);
 
   if (!saveProductsToLocal()) return;
   refreshCategoryOptions(product.category, product.subCategory || "Khác");
@@ -984,7 +1016,7 @@ function importJsonFile(file) {
     try {
       const parsed = JSON.parse(String(reader.result || "[]"));
       if (!Array.isArray(parsed)) throw new Error("JSON khong dung dinh dang array.");
-      products = parsed.map(normalizeProduct);
+      products = ensureUniqueSlugs(parsed.map(normalizeProduct));
       if (!saveProductsToLocal()) return;
       refreshCategoryOptions();
       renderAdminList();

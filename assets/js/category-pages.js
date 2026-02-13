@@ -28,11 +28,18 @@ const AFFILIATE_SUB_ID = String(window.SEO_CONFIG?.affiliateSubId || "site_t1").
 
 function slugify(value) {
   return String(value || "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function createProductSlug(value) {
+  const base = slugify(value).slice(0, 60).replace(/-+$/g, "");
+  return base || "san-pham";
 }
 
 function normalizeTags(tags) {
@@ -88,6 +95,7 @@ function normalizeProduct(product) {
 
   return {
     id: product.id || "",
+    slug: createProductSlug(product.slug || product.name || product.id || "san-pham"),
     name: product.name || "Sản phẩm",
     image: product.image || FALLBACK_IMAGE,
     currentPrice: Number(product.currentPrice) || 0,
@@ -126,8 +134,9 @@ function extractBrand(name, explicitBrand = "") {
   return first.length <= 2 && tokens[1] ? `${first} ${tokens[1]}` : first;
 }
 
-function buildProductDetailUrl(id) {
-  return `${BASE_PREFIX}product.html?id=${encodeURIComponent(id)}`;
+function buildProductDetailUrl(product) {
+  const slug = createProductSlug(product?.slug || product?.name || product?.id || "");
+  return `${BASE_PREFIX}san-pham/${encodeURIComponent(slug)}`;
 }
 
 function buildPageHref(page) {
@@ -277,14 +286,14 @@ function renderCards(reset = false) {
       const discountBadge = item.discount > 0 ? `<span class="discount-badge">-${item.discount}%</span>` : "";
       return `
         <article class="product-card" data-id="${item.id}">
-          <a class="product-link" href="${buildProductDetailUrl(item.id)}" target="_blank" rel="noopener">
+          <a class="product-link" href="${buildProductDetailUrl(item)}" target="_blank" rel="noopener">
             <div class="product-image-wrap">
               <img class="product-image" src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" />
               ${discountBadge}
             </div>
           </a>
           <div class="product-body">
-            <a class="product-link" href="${buildProductDetailUrl(item.id)}" target="_blank" rel="noopener">
+            <a class="product-link" href="${buildProductDetailUrl(item)}" target="_blank" rel="noopener">
               <h3 class="product-name">${item.name}</h3>
             </a>
             <div class="price-row">

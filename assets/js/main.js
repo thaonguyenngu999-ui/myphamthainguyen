@@ -180,11 +180,18 @@ function escapeHtml(text) {
 
 function slugify(value) {
   return String(value || "")
+    .replaceAll("đ", "d")
+    .replaceAll("Đ", "d")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function createProductSlug(value) {
+  const base = slugify(value).slice(0, 60).replace(/-+$/g, "");
+  return base || "san-pham";
 }
 
 function normalizeTags(tags) {
@@ -259,6 +266,7 @@ function normalizeProduct(product) {
 
   return {
     id: product.id || makeId(),
+    slug: createProductSlug(product.slug || product.name || product.id || "san-pham"),
     name: product.name || "Sản phẩm",
     image: images[0] || FALLBACK_IMAGE,
     images,
@@ -295,9 +303,10 @@ function sortByBestDeal(products) {
 }
 
 function buildProductCardHtml(product, extraClass = "") {
+  const detailUrl = buildProductDetailUrl(product);
   return `
     <article class="product-card ${extraClass}" data-id="${product.id}">
-      <a class="product-link" href="${buildProductDetailUrl(product.id)}" target="_blank" rel="noopener">
+      <a class="product-link" href="${detailUrl}" target="_blank" rel="noopener">
         <div class="product-image-wrap" data-image-click="1">
           <img
             class="product-image"
@@ -311,7 +320,7 @@ function buildProductCardHtml(product, extraClass = "") {
         </div>
       </a>
       <div class="product-body">
-        <a class="product-link" href="${buildProductDetailUrl(product.id)}" target="_blank" rel="noopener">
+        <a class="product-link" href="${detailUrl}" target="_blank" rel="noopener">
           <h3 class="product-name">${product.name}</h3>
         </a>
         <div class="price-row">
@@ -784,8 +793,9 @@ function estimateSold(id) {
   return (hash + 10).toLocaleString("vi-VN");
 }
 
-function buildProductDetailUrl(productId) {
-  return `product.html?id=${encodeURIComponent(productId)}`;
+function buildProductDetailUrl(product) {
+  const slug = createProductSlug(product?.slug || product?.name || product?.id || "");
+  return `san-pham/${encodeURIComponent(slug)}`;
 }
 
 function initBottomNavActive() {
