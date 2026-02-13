@@ -226,7 +226,10 @@ function renderViewer(mediaItem) {
   viewerVideo.src = "";
   videoPlayOverlay?.classList.add("hidden");
   viewerImage.classList.remove("hidden");
+  viewerImage.onerror = null;
+  viewerImage.src = "";
   viewerImage.src = mediaItem.url || FALLBACK_IMAGE;
+  viewerImage.alt = activeProduct?.name || "Ảnh sản phẩm";
   viewerImage.onerror = () => {
     viewerImage.onerror = null;
     viewerImage.src = FALLBACK_IMAGE;
@@ -266,21 +269,29 @@ function renderMediaGallery(product) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "thumb-item";
+    btn.dataset.index = String(index);
     if (index === 0) btn.classList.add("active");
 
     if (item.type === "video") {
       btn.classList.add("thumb-video");
       btn.innerHTML = `<span class="thumb-video-icon">▶</span><span class="thumb-video-text">Video</span>`;
     } else {
-      btn.innerHTML = `<img src="${item.url}" alt="thumb" loading="lazy" />`;
+      btn.innerHTML = `<img src="${item.url}" alt="thumb" loading="lazy" tabindex="-1" />`;
     }
-
-    btn.addEventListener("click", () => {
-      showMediaAt(index);
-    });
 
     viewerThumbs.appendChild(btn);
   });
+
+  viewerThumbs.onclick = (e) => {
+    const btn = e.target.closest(".thumb-item");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const i = parseInt(btn.dataset.index, 10);
+    if (!Number.isNaN(i) && i !== currentMediaIndex) {
+      showMediaAt(i);
+    }
+  };
 }
 
 function bindMediaNavigation() {

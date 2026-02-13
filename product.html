@@ -111,7 +111,7 @@
   </nav>
 
   <script id="productJsonLd" type="application/ld+json">{}</script>
-  <script src="assets/js/product.js?v=20260217" defer></script>
+  <script src="assets/js/product.js?v=20260219" defer></script>
   <script>
     (function productInlineFallback() {
       function slugify(value) {
@@ -247,6 +247,8 @@
               if (videoOverlay) videoOverlay.classList.add("hidden");
             }
             viewerImage.classList.remove("hidden");
+            viewerImage.onerror = null;
+            viewerImage.src = "";
             viewerImage.src = item.url || FALLBACK_IMG;
             viewerImage.alt = product.name;
             viewerImage.onerror = function () {
@@ -260,15 +262,23 @@
           var btn = document.createElement("button");
           btn.type = "button";
           btn.className = "thumb-item" + (i === 0 ? " active" : "");
+          btn.dataset.index = String(i);
           if (item.type === "video") {
             btn.classList.add("thumb-video");
             btn.innerHTML = "<span class=\"thumb-video-icon\">&#9654;</span><span class=\"thumb-video-text\">Video</span>";
           } else {
-            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"thumb\" loading=\"lazy\" />";
+            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"thumb\" loading=\"lazy\" tabindex=\"-1\" />";
           }
-          btn.addEventListener("click", function () { setActive(i); });
           viewerThumbs.appendChild(btn);
         });
+        viewerThumbs.onclick = function (e) {
+          var btn = e.target.closest ? e.target.closest(".thumb-item") : null;
+          if (!btn) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var j = parseInt(btn.dataset.index, 10);
+          if (!isNaN(j) && j !== idx) setActive(j);
+        };
         if (prevBtn) prevBtn.onclick = function () { setActive(idx - 1); };
         if (nextBtn) nextBtn.onclick = function () { setActive(idx + 1); };
         setActive(0);

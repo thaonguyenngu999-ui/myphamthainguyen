@@ -503,6 +503,7 @@ body {
   height: 58px;
   object-fit: cover;
   display: block;
+  pointer-events: none;
 }
 
 .thumb-item.active {
