@@ -111,7 +111,7 @@
   </nav>
 
   <script id="productJsonLd" type="application/ld+json">{}</script>
-  <script src="assets/js/product.js?v=20260219" defer></script>
+  <script src="assets/js/product.js?v=20260220" defer></script>
   <script>
     (function productInlineFallback() {
       function slugify(value) {
@@ -269,16 +269,14 @@
           } else {
             btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"thumb\" loading=\"lazy\" tabindex=\"-1\" />";
           }
+          btn.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var j = parseInt(this.dataset.index, 10);
+            if (!isNaN(j)) setActive(j);
+          });
           viewerThumbs.appendChild(btn);
         });
-        viewerThumbs.onclick = function (e) {
-          var btn = e.target.closest ? e.target.closest(".thumb-item") : null;
-          if (!btn) return;
-          e.preventDefault();
-          e.stopPropagation();
-          var j = parseInt(btn.dataset.index, 10);
-          if (!isNaN(j) && j !== idx) setActive(j);
-        };
         if (prevBtn) prevBtn.onclick = function () { setActive(idx - 1); };
         if (nextBtn) nextBtn.onclick = function () { setActive(idx + 1); };
         setActive(0);
