@@ -138,18 +138,25 @@
         const pathSlug = pathMatch ? createProductSlug(decodeURIComponent(pathMatch[1] || "").replace(/\.html$/i, "")) : "";
         return pathSlug || querySlug;
       }
+      var FALLBACK_IMG = "https://placehold.co/600x600?text=My+Pham";
       function normalizeProduct(item) {
+        var imgs = Array.isArray(item.images) ? item.images.filter(Boolean) : [];
+        if (!imgs.length && item.image) imgs = [item.image];
+        if (!imgs.length) imgs = [FALLBACK_IMG];
         return {
           id: String(item.id || ""),
           slug: createProductSlug(item.slug || item.name || item.id || ""),
           name: String(item.name || "Sản phẩm"),
-          image: String(item.image || (Array.isArray(item.images) && item.images[0]) || "https://placehold.co/600x600?text=My+Pham"),
+          image: String(imgs[0] || FALLBACK_IMG),
+          images: imgs,
+          videoUrl: String(item.videoUrl || item.video || ""),
           currentPrice: Number(item.currentPrice) || 0,
           oldPrice: Number(item.oldPrice) || 0,
           discount: Number(item.discount) || 0,
           affiliateLink: String(item.affiliateLink || "#"),
           description: String(item.description || "Đang cập nhật mô tả sản phẩm."),
-          specs: Array.isArray(item.specs) ? item.specs.filter(Boolean) : []
+          specs: Array.isArray(item.specs) ? item.specs.filter(Boolean) : [],
+          details: String(item.details || item.longDescription || item.description || "")
         };
       }
       function shouldRunFallback() {
@@ -182,28 +189,109 @@
         if (nameEl) nameEl.textContent = "Không tìm thấy sản phẩm";
         if (descEl) descEl.textContent = "Sản phẩm không tồn tại hoặc đã bị xóa.";
       }
-      function renderProduct(product) {
-        const nameEl = document.getElementById("productName");
-        const imageEl = document.getElementById("viewerImage");
-        const currentEl = document.getElementById("productCurrentPrice");
-        const oldEl = document.getElementById("productOldPrice");
-        const discountEl = document.getElementById("productDiscount");
-        const descEl = document.getElementById("productDescription");
-        const detailEl = document.getElementById("productDetails");
-        const specsEl = document.getElementById("productSpecs");
-        const buyBtn = document.getElementById("buyNowBtn");
-        if (nameEl) nameEl.textContent = product.name;
-        if (imageEl) {
-          imageEl.src = product.image;
-          imageEl.alt = product.name;
+      function getMediaList(product) {
+        var media = (product.images || []).map(function (url) { return { type: "image", url: url }; });
+        if (product.videoUrl) media.unshift({ type: "video", url: product.videoUrl });
+        return media.length ? media : [{ type: "image", url: FALLBACK_IMG }];
+      }
+
+      function renderMediaGallery(product) {
+        var viewerImage = document.getElementById("viewerImage");
+        var viewerVideo = document.getElementById("viewerVideo");
+        var viewerThumbs = document.getElementById("viewerThumbs");
+        var videoOverlay = document.getElementById("videoPlayOverlay");
+        var prevBtn = document.getElementById("prevMediaBtn");
+        var nextBtn = document.getElementById("nextMediaBtn");
+        if (!viewerImage || !viewerThumbs) return;
+        var mediaList = getMediaList(product);
+        var idx = 0;
+        function setActive(i) {
+          idx = (i + mediaList.length) % mediaList.length;
+          mediaList.forEach(function (m, j) {
+            var t = viewerThumbs.children[j];
+            if (t) t.classList.toggle("active", j === idx);
+          });
+          var item = mediaList[idx];
+          if (item.type === "video") {
+            viewerImage.classList.add("hidden");
+            viewerImage.src = "";
+            if (viewerVideo) {
+              viewerVideo.classList.remove("hidden");
+              viewerVideo.muted = true;
+              viewerVideo.loop = true;
+              viewerVideo.playsInline = true;
+              viewerVideo.setAttribute("playsinline", "");
+              viewerVideo.setAttribute("muted", "");
+              viewerVideo.poster = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
+              viewerVideo.src = item.url;
+              viewerVideo.load();
+              viewerVideo.play().then(function () {
+                if (videoOverlay) videoOverlay.classList.add("hidden");
+              }).catch(function () {
+                if (videoOverlay) videoOverlay.classList.remove("hidden");
+              });
+              viewerVideo.onerror = function () {
+                viewerVideo.classList.add("hidden");
+                viewerVideo.src = "";
+                if (videoOverlay) videoOverlay.classList.add("hidden");
+                viewerImage.classList.remove("hidden");
+                viewerImage.src = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
+                viewerImage.alt = product.name;
+              };
+            }
+          } else {
+            if (viewerVideo) {
+              viewerVideo.pause();
+              viewerVideo.classList.add("hidden");
+              viewerVideo.src = "";
+              if (videoOverlay) videoOverlay.classList.add("hidden");
+            }
+            viewerImage.classList.remove("hidden");
+            viewerImage.src = item.url || FALLBACK_IMG;
+            viewerImage.alt = product.name;
+            viewerImage.onerror = function () {
+              viewerImage.onerror = null;
+              viewerImage.src = FALLBACK_IMG;
+            };
+          }
         }
+        viewerThumbs.innerHTML = "";
+        mediaList.forEach(function (item, i) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "thumb-item" + (i === 0 ? " active" : "");
+          if (item.type === "video") {
+            btn.classList.add("thumb-video");
+            btn.innerHTML = "<span class=\"thumb-video-icon\">&#9654;</span><span class=\"thumb-video-text\">Video</span>";
+          } else {
+            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"thumb\" loading=\"lazy\" />";
+          }
+          btn.addEventListener("click", function () { setActive(i); });
+          viewerThumbs.appendChild(btn);
+        });
+        if (prevBtn) prevBtn.onclick = function () { setActive(idx - 1); };
+        if (nextBtn) nextBtn.onclick = function () { setActive(idx + 1); };
+        setActive(0);
+      }
+
+      function renderProduct(product) {
+        var nameEl = document.getElementById("productName");
+        var currentEl = document.getElementById("productCurrentPrice");
+        var oldEl = document.getElementById("productOldPrice");
+        var discountEl = document.getElementById("productDiscount");
+        var descEl = document.getElementById("productDescription");
+        var detailEl = document.getElementById("productDetails");
+        var specsEl = document.getElementById("productSpecs");
+        var buyBtn = document.getElementById("buyNowBtn");
+        if (nameEl) nameEl.textContent = product.name;
+        renderMediaGallery(product);
         if (currentEl) currentEl.textContent = formatVnd(product.currentPrice);
         if (oldEl) oldEl.textContent = product.oldPrice ? formatVnd(product.oldPrice) : "";
-        if (discountEl) discountEl.textContent = product.discount ? `-${product.discount}%` : "";
+        if (discountEl) discountEl.textContent = product.discount ? "-" + product.discount + "%" : "";
         if (descEl) descEl.textContent = product.description;
-        if (detailEl) detailEl.textContent = product.description;
+        if (detailEl) detailEl.textContent = product.details || product.description;
         if (specsEl) {
-          const specs = product.specs.length
+          var specs = product.specs.length
             ? product.specs
             : ["Thông tin chi tiết đang được cập nhật."];
           specsEl.innerHTML = specs.map(function (spec) {
