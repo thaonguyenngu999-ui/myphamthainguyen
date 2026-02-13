@@ -251,37 +251,52 @@ function renderViewerByIndex(index) {
 
   const imgEl = document.getElementById("viewerImage");
   if (mediaItem.type === "video") {
-    /* Hiển thị ảnh đầu tiên làm poster, chỉ phát video khi nhấn play */
     const posterOriginalUrl = activeProduct?.images?.[0] || FALLBACK_IMAGE;
     const posterProxied = proxyImageUrl(posterOriginalUrl, 0);
 
-    /* Ẩn video element hoàn toàn */
-    viewerVideo.pause();
-    viewerVideo.src = "";
-    viewerVideo.classList.add("hidden");
+    /* Ẩn ảnh, hiện video và auto-play */
+    if (imageSlot) imageSlot.classList.add("hidden");
+    viewerVideo.classList.remove("hidden");
+    viewerVideo.muted = true;
+    viewerVideo.loop = true;
+    viewerVideo.playsInline = true;
+    viewerVideo.setAttribute("playsinline", "");
+    viewerVideo.setAttribute("muted", "");
+    viewerVideo.poster = posterProxied;
+    viewerVideo.src = mediaItem.url;
+    viewerVideo.load();
+    videoPlayOverlay?.classList.add("hidden");
 
-    /* Hiện ảnh poster thay thế */
-    if (imageSlot) {
-      imageSlot.classList.remove("hidden");
-    }
-    if (imgEl) {
-      imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
-      imgEl.onerror = function () {
-        this.onerror = function () {
-          this.onerror = null;
-          this.src = FALLBACK_IMAGE;
-        };
-        this.src = proxyImageUrl(posterOriginalUrl, 1);
-      };
-      imgEl.src = posterProxied;
-    }
+    viewerVideo.play()
+      .then(() => { if (videoPlayOverlay) videoPlayOverlay.classList.add("hidden"); })
+      .catch(() => {
+        /* Auto-play bị chặn → hiện poster + nút play */
+        viewerVideo.classList.add("hidden");
+        viewerVideo.src = "";
+        if (imageSlot) imageSlot.classList.remove("hidden");
+        if (imgEl) {
+          imgEl.onerror = function () { this.onerror = null; this.src = FALLBACK_IMAGE; };
+          imgEl.src = posterProxied;
+          imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
+        }
+        if (videoPlayOverlay) {
+          videoPlayOverlay.classList.remove("hidden");
+          videoPlayOverlay._pendingVideoUrl = mediaItem.url;
+          videoPlayOverlay._posterUrl = posterOriginalUrl;
+        }
+      });
 
-    /* Hiện nút play overlay */
-    if (videoPlayOverlay) {
-      videoPlayOverlay.classList.remove("hidden");
-      videoPlayOverlay._pendingVideoUrl = mediaItem.url;
-      videoPlayOverlay._posterUrl = posterOriginalUrl;
-    }
+    viewerVideo.onerror = () => {
+      viewerVideo.classList.add("hidden");
+      viewerVideo.src = "";
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imgEl) {
+        imgEl.onerror = function () { this.onerror = null; this.src = FALLBACK_IMAGE; };
+        imgEl.src = posterProxied;
+        imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
+      }
+      videoPlayOverlay?.classList.add("hidden");
+    };
     return;
   }
 

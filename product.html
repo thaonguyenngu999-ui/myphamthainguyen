@@ -233,24 +233,44 @@
           });
           var item = mediaList[idx];
           if (item.type === "video") {
-            /* Hiện ảnh poster + nút play, KHÔNG auto-play video */
-            if (viewerVideo) {
-              viewerVideo.pause();
-              viewerVideo.src = "";
-              viewerVideo.classList.add("hidden");
-            }
-            imageSlot.classList.remove("hidden");
             var posterUrl = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
             if (posterUrl.includes("susercontent.com")) {
               posterUrl = "https://wsrv.nl/?url=" + encodeURIComponent(posterUrl) + "&n=-1";
             }
-            viewerImg.onerror = function () { this.onerror = null; this.src = FALLBACK_IMG; };
-            viewerImg.src = posterUrl;
-            viewerImg.alt = (product.name || "San pham") + " - Video";
-            if (videoOverlay) {
-              videoOverlay.classList.remove("hidden");
-              videoOverlay._pendingVideoUrl = item.url;
-              videoOverlay._posterUrl = posterUrl;
+            /* Auto-play video */
+            imageSlot.classList.add("hidden");
+            if (viewerVideo) {
+              viewerVideo.classList.remove("hidden");
+              viewerVideo.muted = true;
+              viewerVideo.loop = true;
+              viewerVideo.playsInline = true;
+              viewerVideo.setAttribute("playsinline", "");
+              viewerVideo.setAttribute("muted", "");
+              viewerVideo.poster = posterUrl;
+              viewerVideo.src = item.url;
+              viewerVideo.load();
+              if (videoOverlay) videoOverlay.classList.add("hidden");
+              viewerVideo.play().then(function () {
+                if (videoOverlay) videoOverlay.classList.add("hidden");
+              }).catch(function () {
+                viewerVideo.classList.add("hidden");
+                viewerVideo.src = "";
+                imageSlot.classList.remove("hidden");
+                viewerImg.onerror = function () { this.onerror = null; this.src = FALLBACK_IMG; };
+                viewerImg.src = posterUrl;
+                if (videoOverlay) {
+                  videoOverlay.classList.remove("hidden");
+                  videoOverlay._pendingVideoUrl = item.url;
+                  videoOverlay._posterUrl = posterUrl;
+                }
+              });
+              viewerVideo.onerror = function () {
+                viewerVideo.classList.add("hidden");
+                viewerVideo.src = "";
+                imageSlot.classList.remove("hidden");
+                viewerImg.src = posterUrl;
+                if (videoOverlay) videoOverlay.classList.add("hidden");
+              };
             }
           } else {
             if (viewerVideo) {
