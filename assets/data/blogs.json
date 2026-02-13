@@ -1,0 +1,45 @@
+{
+  "posts": [
+    {
+      "id": "blog-001",
+      "title": "Cách chọn kem chống nắng theo loại da",
+      "summary": "Tóm tắt tiêu chí SPF, PA và texture phù hợp da dầu, da khô, da nhạy cảm để mua đúng ngay từ đầu.",
+      "url": "san-pham/chong-nang.html",
+      "tag": "Chống nắng",
+      "ctaText": "Xem danh mục chống nắng"
+    },
+    {
+      "id": "blog-002",
+      "title": "Serum nào hợp cho da xỉn màu?",
+      "summary": "Gợi ý nhóm hoạt chất phổ biến như Vitamin C, Niacinamide và cách kết hợp routine cơ bản.",
+      "url": "san-pham.html?subCategory=serum",
+      "tag": "Serum",
+      "ctaText": "Xem sản phẩm serum"
+    },
+    {
+      "id": "blog-003",
+      "title": "Mẹo săn deal mỹ phẩm không bị hớ",
+      "summary": "Ưu tiên so sánh giá cũ - giá mới, xem thành phần và chọn shop uy tín trước khi chốt đơn.",
+      "url": "huong-dan-mua-hang.html",
+      "tag": "Mẹo mua hàng",
+      "ctaText": "Xem hướng dẫn mua hàng"
+    }
+  ],
+  "faqs": [
+    {
+      "id": "faq-001",
+      "question": "Mỹ Phẩm Thái Nguyên có bán hàng trực tiếp không?",
+      "answer": "Website hoạt động theo mô hình tổng hợp và giới thiệu sản phẩm. Khi bấm mua, bạn sẽ được chuyển đến trang đối tác để đặt hàng."
+    },
+    {
+      "id": "faq-002",
+      "question": "Giá sản phẩm có cố định không?",
+      "answer": "Giá có thể thay đổi theo chương trình khuyến mãi của đối tác. Bạn nên kiểm tra giá cuối cùng tại trang đặt hàng trước khi thanh toán."
+    },
+    {
+      "id": "faq-003",
+      "question": "Tôi có thể lọc sản phẩm theo nhu cầu không?",
+      "answer": "Bạn có thể tìm kiếm theo từ khóa, lọc theo danh mục hoặc vào trang sản phẩm để lọc theo mức giá và thương hiệu."
+    }
+  ]
+}
