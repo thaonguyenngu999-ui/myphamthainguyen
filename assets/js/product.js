@@ -366,6 +366,16 @@ function setActiveThumb(index) {
 function showMediaAt(index) {
   if (!currentMediaList.length) return;
   const normalizedIndex = (index + currentMediaList.length) % currentMediaList.length;
+  const alreadyOnVideo = currentMediaList[normalizedIndex]?.type === "video" && normalizedIndex === currentMediaIndex;
+  if (alreadyOnVideo && viewerVideo && !viewerVideo.classList.contains("hidden")) {
+    autoplayBlockedWaiting = false;
+    if (viewerVideo.src) {
+      viewerVideo.play().then(() => videoPlayOverlay?.classList.add("hidden")).catch(() => {});
+    } else if (typeof pendingVideoLoad === "function") {
+      pendingVideoLoad();
+    }
+    return;
+  }
   if (normalizedIndex === currentMediaIndex) return;
   currentMediaIndex = normalizedIndex;
   renderViewerByIndex(normalizedIndex);

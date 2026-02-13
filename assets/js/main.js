@@ -830,6 +830,13 @@ function renderModalViewerByIndex(index) {
 function showModalMediaAt(index) {
   if (!modalMediaList.length) return;
   const next = (index + modalMediaList.length) % modalMediaList.length;
+  const alreadyOnVideo = modalMediaList[next]?.type === "video" && next === modalMediaIndex;
+  if (alreadyOnVideo && modalViewerVideo && !modalViewerVideo.classList.contains("hidden")) {
+    if (modalViewerVideo.src) {
+      modalViewerVideo.play().then(() => modalVideoPlayOverlay?.classList.add("hidden")).catch(() => {});
+    }
+    return;
+  }
   if (next === modalMediaIndex) return;
   modalMediaIndex = next;
   renderModalViewerByIndex(modalMediaIndex);

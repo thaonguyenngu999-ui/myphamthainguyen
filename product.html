@@ -234,6 +234,11 @@
         viewerThumbs.classList.toggle("hidden", mediaList.length <= 1);
         function setActive(i) {
           var nextIdx = (i + mediaList.length) % mediaList.length;
+          var alreadyOnVideo = mediaList[nextIdx] && mediaList[nextIdx].type === "video" && nextIdx === idx;
+          if (alreadyOnVideo && viewerVideo && !viewerVideo.classList.contains("hidden")) {
+            viewerVideo.play().then(function () { if (videoOverlay) videoOverlay.classList.add("hidden"); }).catch(function () {});
+            return;
+          }
           if (nextIdx === idx) return;
           idx = nextIdx;
           mediaList.forEach(function (m, j) {
