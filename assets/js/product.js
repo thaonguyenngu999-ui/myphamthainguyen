@@ -255,15 +255,16 @@ function renderViewerByIndex(index) {
     const posterOriginalUrl = activeProduct?.images?.[0] || FALLBACK_IMAGE;
     const posterProxied = proxyImageUrl(posterOriginalUrl, 0);
 
-    /* Ẩn video, hiện ảnh poster thay thế */
-    viewerVideo.classList.add("hidden");
+    /* Ẩn video element hoàn toàn */
     viewerVideo.pause();
-    viewerVideo.removeAttribute("src");
-    viewerVideo.load();
+    viewerVideo.src = "";
+    viewerVideo.classList.add("hidden");
 
-    if (imageSlot) imageSlot.classList.remove("hidden");
+    /* Hiện ảnh poster thay thế */
+    if (imageSlot) {
+      imageSlot.classList.remove("hidden");
+    }
     if (imgEl) {
-      /* Dùng proxy trực tiếp cho poster (giống ảnh sản phẩm đang hoạt động tốt) */
       imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
       imgEl.onerror = function () {
         this.onerror = function () {
@@ -284,10 +285,13 @@ function renderViewerByIndex(index) {
     return;
   }
 
-  if (imageSlot) imageSlot.classList.remove("hidden");
+  /* === Hiện ảnh thường === */
+  if (imageSlot) {
+    imageSlot.classList.remove("hidden");
+  }
   viewerVideo.pause();
-  viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
+  viewerVideo.classList.add("hidden");
   videoPlayOverlay?.classList.add("hidden");
 
   const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
@@ -454,18 +458,24 @@ function bindMediaNavigation() {
     const imgEl = document.getElementById("viewerImage");
 
     function fallbackToImage() {
+      viewerVideo.pause();
+      viewerVideo.src = "";
       viewerVideo.classList.add("hidden");
-      viewerVideo.removeAttribute("src");
-      viewerVideo.load();
-      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imageSlot) {
+        imageSlot.classList.remove("hidden");
+      }
       if (imgEl) {
-        applyImageWithFallback(imgEl, posterOriginalUrl || FALLBACK_IMAGE, (activeProduct?.name || "Sản phẩm") + " - Video");
+        const posterProxied = proxyImageUrl(posterOriginalUrl || FALLBACK_IMAGE, 0);
+        imgEl.onerror = function () { this.onerror = null; this.src = FALLBACK_IMAGE; };
+        imgEl.src = posterProxied;
       }
       videoPlayOverlay.classList.add("hidden");
     }
 
     /* Ẩn ảnh poster, hiện video */
-    if (imageSlot) imageSlot.classList.add("hidden");
+    if (imageSlot) {
+      imageSlot.classList.add("hidden");
+    }
     viewerVideo.classList.remove("hidden");
     viewerVideo.muted = true;
     viewerVideo.loop = true;
