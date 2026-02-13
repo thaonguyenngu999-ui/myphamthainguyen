@@ -27,7 +27,7 @@ const REMOTE_PRODUCTS_FALLBACK_URLS = [
   "https://cdn.jsdelivr.net/gh/thaonguyenngu999-ui/myphamthainguyen@main/assets/data/products.json"
 ].filter(Boolean);
 
-const viewerVideo = document.getElementById("viewerVideo");
+const viewerVideo = document.getElementById("product-video");
 const videoPlayOverlay = document.getElementById("videoPlayOverlay");
 const videoFallback = document.getElementById("videoFallback");
 const videoFallbackLink = document.getElementById("videoFallbackLink");
@@ -295,16 +295,17 @@ function renderViewerByIndex(index) {
       if (!viewerVideo.src) { viewerVideo.src = src; viewerVideo.load(); }
       videoLoadTimeoutId = setTimeout(showFallback, VIDEO_LOAD_TIMEOUT);
       autoplayBlockedWaiting = false;
+      viewerVideo.currentTime = 0;
       viewerVideo.play()
         .then(() => {
           if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
           videoPlayOverlay?.classList.add("hidden");
         })
-        .catch(() => {
+        .catch((err) => {
           videoPlayOverlay?.classList.remove("hidden");
           autoplayBlockedWaiting = true;
-          if (typeof console !== "undefined" && console.log) console.log("Autoplay blocked");
-          bindInteractionRetryPlay();
+          if (typeof console !== "undefined" && console.log) console.log("Autoplay blocked:", err);
+          document.body.addEventListener("click", () => { viewerVideo.play(); }, { once: true });
         });
     };
     pendingVideoLoad = tryLoadAndPlay;
