@@ -253,6 +253,7 @@ function renderViewerByIndex(index) {
   if (mediaItem.type === "video") {
     /* Hiển thị ảnh đầu tiên làm poster, chỉ phát video khi nhấn play */
     const posterOriginalUrl = activeProduct?.images?.[0] || FALLBACK_IMAGE;
+    const posterProxied = proxyImageUrl(posterOriginalUrl, 0);
 
     /* Ẩn video, hiện ảnh poster thay thế */
     viewerVideo.classList.add("hidden");
@@ -262,7 +263,16 @@ function renderViewerByIndex(index) {
 
     if (imageSlot) imageSlot.classList.remove("hidden");
     if (imgEl) {
-      applyImageWithFallback(imgEl, posterOriginalUrl, (activeProduct?.name || "Sản phẩm") + " - Video");
+      /* Dùng proxy trực tiếp cho poster (giống ảnh sản phẩm đang hoạt động tốt) */
+      imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
+      imgEl.onerror = function () {
+        this.onerror = function () {
+          this.onerror = null;
+          this.src = FALLBACK_IMAGE;
+        };
+        this.src = proxyImageUrl(posterOriginalUrl, 1);
+      };
+      imgEl.src = posterProxied;
     }
 
     /* Hiện nút play overlay */
