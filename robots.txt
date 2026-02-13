@@ -1,5 +1,11 @@
+# robots.txt - Mỹ Phẩm Thái Nguyên
+# Chuẩn SEO 2026
+
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /admin/
+Disallow: /*.json$
 
-Sitemap: https://your-username.github.io/my-pham-thai-nguyen/sitemap.xml
+# Sitemap
+Sitemap: https://myphamthainguyen.com/sitemap.xml

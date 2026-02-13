@@ -1,63 +1,107 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Trang chính -->
   <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/</loc>
+    <loc>https://myphamthainguyen.com/</loc>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/san-pham.html</loc>
+    <loc>https://myphamthainguyen.com/index.html</loc>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>1.0</priority>
   </url>
+  <!-- Danh mục & Sale -->
   <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/sale.html</loc>
+    <loc>https://myphamthainguyen.com/san-pham.html</loc>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/trung-tam-tro-giup.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://myphamthainguyen.com/sale.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
   </url>
+  <!-- Chi tiết sản phẩm (từ products.json) -->
   <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/huong-dan-mua-hang.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/doi-tra-hoan-tien.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/lien-he-ho-tro.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/ve-chung-toi.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/dieu-khoan-su-dung.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/chinh-sach-bao-mat.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/kenh-nguoi-ban.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://your-username.github.io/my-pham-thai-nguyen/san-pham/chong-nang.html</loc>
+    <loc>https://myphamthainguyen.com/san-pham/tuong-phat-thich-ca-go-bach-xanh-am-may-decor-phong-tho-goc</loc>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://down-vn.img.susercontent.com/file/vn-11134207-820l4-mfdpvga27w20d6.webp</image:loc>
+      <image:title>Tượng Phật Thích Ca Gỗ Bách Xanh Am Mây – Decor Phòng Thờ, Góc Tu Tập</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/san-pham/nu-tram-huong-nu-ngoc-am-nu-bach-100-nguyen-chat-giup-khu-mu</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://down-vn.img.susercontent.com/file/vn-11134207-7r98o-lv2cbq5p2epl6b.webp</image:loc>
+      <image:title>Nụ Trầm Hương, Nụ Ngọc Am, Nụ Bách 100% Nguyên Chất giúp khử mùi, thơm phòng, tẩy uế</image:title>
+    </image:image>
+  </url>
+  <!-- Danh mục con -->
+  <url>
+    <loc>https://myphamthainguyen.com/san-pham/chong-nang.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <!-- Trang tĩnh -->
+  <url>
+    <loc>https://myphamthainguyen.com/trung-tam-tro-giup.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/huong-dan-mua-hang.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/doi-tra-hoan-tien.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/lien-he-ho-tro.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/ve-chung-toi.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/dieu-khoan-su-dung.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/chinh-sach-bao-mat.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://myphamthainguyen.com/kenh-nguoi-ban.html</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

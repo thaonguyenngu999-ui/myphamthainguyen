@@ -1,6 +1,6 @@
 window.SEO_CONFIG = {
   // Thay domain nay bang domain GitHub Pages that cua ban
-  siteUrl: "https://your-username.github.io/my-pham-thai-nguyen/",
+  siteUrl: "https://myphamthainguyen.com/",
   // Thay bang Measurement ID tu Google Analytics 4, vd: G-ABC123XYZ
   gaMeasurementId: "",
   // Sub ID gan vao link affiliate de track nguon click
