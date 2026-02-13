@@ -215,12 +215,15 @@ function renderViewerByIndex(index) {
     viewerVideo.playsInline = true;
     viewerVideo.setAttribute("playsinline", "");
     viewerVideo.setAttribute("muted", "");
-    viewerVideo.poster = activeProduct?.images?.[0] || FALLBACK_IMAGE;
-    viewerVideo.src = mediaItem.url;
-    viewerVideo.load();
-    viewerVideo.play()
-      .then(() => videoPlayOverlay?.classList.add("hidden"))
-      .catch(() => videoPlayOverlay?.classList.remove("hidden"));
+    viewerVideo.setAttribute("preload", "none");
+    const posterUrl = activeProduct?.images?.[0] || FALLBACK_IMAGE;
+    if (viewerVideo.poster !== posterUrl) {
+      viewerVideo.poster = posterUrl;
+    }
+    if (viewerVideo.src !== mediaItem.url) {
+      viewerVideo.src = mediaItem.url;
+    }
+    videoPlayOverlay?.classList.remove("hidden");
     viewerVideo.onerror = () => {
       viewerVideo.classList.add("hidden");
       if (imageSlot) imageSlot.classList.remove("hidden");
@@ -237,13 +240,17 @@ function renderViewerByIndex(index) {
   videoPlayOverlay?.classList.add("hidden");
 
   const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
-  const bust = url.indexOf("?") >= 0 ? url + "&_=" + Date.now() : url + "?_=" + Date.now();
   const altBase = activeProduct?.name || "Ảnh sản phẩm";
   const altText = `${altBase} - ảnh ${currentMediaIndex + 1}/${currentMediaList.length}`;
   if (imgEl) {
-    imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
-    imgEl.src = bust;
-    imgEl.alt = altText;
+    if (imgEl.src !== url && !imgEl.src.includes(url.split("?")[0])) {
+      imgEl.loading = currentMediaIndex === 0 ? "eager" : "lazy";
+      imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+      imgEl.src = url;
+      imgEl.alt = altText;
+    } else if (imgEl.alt !== altText) {
+      imgEl.alt = altText;
+    }
   }
 }
 
@@ -294,7 +301,7 @@ function renderMediaGallery(product) {
       btn.innerHTML = `<span class="thumb-video-icon">▶</span><span class="thumb-video-text">Video</span>`;
     } else {
       const altThumb = `${activeProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
-      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" tabindex="-1" referrerpolicy="no-referrer" />`;
+      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" decoding="async" tabindex="-1" referrerpolicy="no-referrer" />`;
     }
 
     btn.addEventListener("click", function (ev) {
@@ -369,6 +376,9 @@ function bindMediaNavigation() {
   });
 
   videoPlayOverlay?.addEventListener("click", () => {
+    if (viewerVideo.src && !viewerVideo.src.includes("blob:")) {
+      viewerVideo.load();
+    }
     viewerVideo.play()
       .then(() => videoPlayOverlay.classList.add("hidden"))
       .catch(() => {});

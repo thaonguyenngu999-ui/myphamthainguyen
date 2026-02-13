@@ -47,9 +47,9 @@
           <div class="detail-viewer product-gallery" id="productGallery">
             <div class="gallery-hero" aria-hidden="false">
             <div class="viewer-image-slot" id="viewerImageSlot">
-              <img id="viewerImage" src="" alt="" referrerpolicy="no-referrer" />
+              <img id="viewerImage" src="" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" />
               </div>
-              <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
+              <video id="viewerVideo" controls preload="none" playsinline muted loop class="hidden"></video>
               <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
                 <span class="material-icons" aria-hidden="true">play_arrow</span>
               </button>
@@ -241,14 +241,15 @@
               viewerVideo.playsInline = true;
               viewerVideo.setAttribute("playsinline", "");
               viewerVideo.setAttribute("muted", "");
-              viewerVideo.poster = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-              viewerVideo.src = item.url;
-              viewerVideo.load();
-              viewerVideo.play().then(function () {
-                if (videoOverlay) videoOverlay.classList.add("hidden");
-              }).catch(function () {
-                if (videoOverlay) videoOverlay.classList.remove("hidden");
-              });
+              viewerVideo.setAttribute("preload", "none");
+              var posterUrl = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
+              if (viewerVideo.poster !== posterUrl) {
+                viewerVideo.poster = posterUrl;
+              }
+              if (viewerVideo.src !== item.url) {
+                viewerVideo.src = item.url;
+              }
+              if (videoOverlay) videoOverlay.classList.remove("hidden");
               viewerVideo.onerror = function () {
                 viewerVideo.classList.add("hidden");
                 viewerVideo.src = "";
@@ -265,10 +266,13 @@
               if (videoOverlay) videoOverlay.classList.add("hidden");
             }
             imageSlot.classList.remove("hidden");
-            var url = (item.url || FALLBACK_IMG) + ((item.url || "").indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now();
-            viewerImg.src = url;
+            var url = item.url || FALLBACK_IMG;
+            if (viewerImg.src !== url && !viewerImg.src.includes(url.split("?")[0])) {
+              viewerImg.loading = idx === 0 ? "eager" : "lazy";
+              viewerImg.onerror = function () { this.src = FALLBACK_IMG; this.onerror = null; };
+              viewerImg.src = url;
+            }
             viewerImg.alt = (product.name || "San pham") + " - anh " + (idx + 1) + "/" + mediaList.length;
-            viewerImg.onerror = function () { this.src = FALLBACK_IMG; this.onerror = null; };
           }
         }
         viewerThumbs.innerHTML = "";
@@ -282,7 +286,7 @@
             btn.innerHTML = "<span class=\"thumb-video-icon\">&#9654;</span><span class=\"thumb-video-text\">Video</span>";
           } else {
             var altThumb = (product.name || "San pham") + " - anh " + (i + 1);
-            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" tabindex=\"-1\" referrerpolicy=\"no-referrer\" />";
+            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" decoding=\"async\" tabindex=\"-1\" referrerpolicy=\"no-referrer\" />";
           }
           btn.addEventListener("click", function (ev) {
             ev.preventDefault();
