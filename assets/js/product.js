@@ -1,13 +1,47 @@
 const STORAGE_KEY = "mypham_products";
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
-const IMAGE_PROXY = "https://wsrv.nl/?url=";
+const IMAGE_PROXIES = [
+  "https://wsrv.nl/?url=",
+  "https://images.weserv.nl/?url=",
+  "https://imageproxy.pimg.tw/resize?url="
+];
 
-function proxyImageUrl(url) {
+function proxyImageUrl(url, proxyIndex = 0) {
   if (!url || typeof url !== "string" || url.startsWith("data:") || url.includes("placehold.co")) return url;
-  if (url.includes("img.susercontent.com") || url.includes("susercontent.com")) {
-    return IMAGE_PROXY + encodeURIComponent(url.trim()) + "&n=-1";
+  if (url.includes("susercontent.com")) {
+    const proxy = IMAGE_PROXIES[proxyIndex] || IMAGE_PROXIES[0];
+    return proxy + encodeURIComponent(url.trim()) + "&n=-1";
   }
   return url;
+}
+
+/* Thử ảnh gốc trước, nếu lỗi thì thử từng proxy, cuối cùng mới dùng placeholder */
+function applyImageWithFallback(imgEl, originalUrl, altText) {
+  if (!imgEl || !originalUrl) return;
+  const proxied0 = proxyImageUrl(originalUrl, 0);
+  const proxied1 = proxyImageUrl(originalUrl, 1);
+  const proxied2 = proxyImageUrl(originalUrl, 2);
+
+  /* Thử URL gốc (không proxy) trước */
+  imgEl.alt = altText || "";
+  imgEl.onerror = function () {
+    /* URL gốc lỗi → thử proxy 0 */
+    this.onerror = function () {
+      /* Proxy 0 lỗi → thử proxy 1 */
+      this.onerror = function () {
+        /* Proxy 1 lỗi → thử proxy 2 */
+        this.onerror = function () {
+          /* Tất cả lỗi → placeholder */
+          this.onerror = null;
+          this.src = FALLBACK_IMAGE;
+        };
+        this.src = proxied2;
+      };
+      this.src = proxied1;
+    };
+    this.src = proxied0;
+  };
+  imgEl.src = originalUrl;
 }
 const REMOTE_PRODUCTS_FALLBACK_URLS = [
   String(window.SEO_CONFIG?.githubRawProductsUrl || "").trim(),
@@ -218,7 +252,7 @@ function renderViewerByIndex(index) {
   const imgEl = document.getElementById("viewerImage");
   if (mediaItem.type === "video") {
     /* Hiển thị ảnh đầu tiên làm poster, chỉ phát video khi nhấn play */
-    const posterUrl = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
+    const posterOriginalUrl = activeProduct?.images?.[0] || FALLBACK_IMAGE;
 
     /* Ẩn video, hiện ảnh poster thay thế */
     viewerVideo.classList.add("hidden");
@@ -228,16 +262,14 @@ function renderViewerByIndex(index) {
 
     if (imageSlot) imageSlot.classList.remove("hidden");
     if (imgEl) {
-      imgEl.src = posterUrl;
-      imgEl.alt = (activeProduct?.name || "Sản phẩm") + " - Video";
-      imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+      applyImageWithFallback(imgEl, posterOriginalUrl, (activeProduct?.name || "Sản phẩm") + " - Video");
     }
 
     /* Hiện nút play overlay */
     if (videoPlayOverlay) {
       videoPlayOverlay.classList.remove("hidden");
       videoPlayOverlay._pendingVideoUrl = mediaItem.url;
-      videoPlayOverlay._posterUrl = posterUrl;
+      videoPlayOverlay._posterUrl = posterOriginalUrl;
     }
     return;
   }
@@ -249,18 +281,11 @@ function renderViewerByIndex(index) {
   videoPlayOverlay?.classList.add("hidden");
 
   const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
-  const url = proxyImageUrl(rawUrl);
   const altBase = activeProduct?.name || "Ảnh sản phẩm";
   const altText = `${altBase} - ảnh ${currentMediaIndex + 1}/${currentMediaList.length}`;
   if (imgEl) {
-    if (imgEl.src !== url) {
-      imgEl.loading = currentMediaIndex === 0 ? "eager" : "lazy";
-      imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
-      imgEl.src = url;
-      imgEl.alt = altText;
-    } else if (imgEl.alt !== altText) {
-      imgEl.alt = altText;
-    }
+    imgEl.loading = currentMediaIndex === 0 ? "eager" : "lazy";
+    applyImageWithFallback(imgEl, rawUrl, altText);
   }
 }
 
@@ -311,8 +336,13 @@ function renderMediaGallery(product) {
       btn.innerHTML = `<span class="thumb-video-icon">▶</span><span class="thumb-video-text">Video</span>`;
     } else {
       const altThumb = `${activeProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
-      const thumbUrl = proxyImageUrl(item.url);
-      btn.innerHTML = `<img src="${thumbUrl}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" decoding="async" tabindex="-1" />`;
+      const thumbImg = document.createElement("img");
+      thumbImg.alt = altThumb;
+      thumbImg.loading = "lazy";
+      thumbImg.decoding = "async";
+      thumbImg.tabIndex = -1;
+      applyImageWithFallback(thumbImg, item.url, altThumb);
+      btn.appendChild(thumbImg);
     }
 
     btn.addEventListener("click", function (ev) {
@@ -407,11 +437,22 @@ function bindMediaNavigation() {
 
   videoPlayOverlay?.addEventListener("click", () => {
     const videoUrl = videoPlayOverlay._pendingVideoUrl;
-    const posterUrl = videoPlayOverlay._posterUrl || "";
+    const posterOriginalUrl = videoPlayOverlay._posterUrl || "";
     if (!videoUrl) return;
 
     const imageSlot = document.getElementById("viewerImageSlot");
     const imgEl = document.getElementById("viewerImage");
+
+    function fallbackToImage() {
+      viewerVideo.classList.add("hidden");
+      viewerVideo.removeAttribute("src");
+      viewerVideo.load();
+      if (imageSlot) imageSlot.classList.remove("hidden");
+      if (imgEl) {
+        applyImageWithFallback(imgEl, posterOriginalUrl || FALLBACK_IMAGE, (activeProduct?.name || "Sản phẩm") + " - Video");
+      }
+      videoPlayOverlay.classList.add("hidden");
+    }
 
     /* Ẩn ảnh poster, hiện video */
     if (imageSlot) imageSlot.classList.add("hidden");
@@ -421,35 +462,14 @@ function bindMediaNavigation() {
     viewerVideo.playsInline = true;
     viewerVideo.setAttribute("playsinline", "");
     viewerVideo.setAttribute("muted", "");
-    if (posterUrl) viewerVideo.poster = posterUrl;
+    if (posterOriginalUrl) viewerVideo.poster = proxyImageUrl(posterOriginalUrl);
     viewerVideo.src = videoUrl;
     viewerVideo.load();
     viewerVideo.play()
       .then(() => videoPlayOverlay.classList.add("hidden"))
-      .catch(() => {
-        /* Video không phát được → fallback về ảnh */
-        viewerVideo.classList.add("hidden");
-        viewerVideo.removeAttribute("src");
-        viewerVideo.load();
-        if (imageSlot) imageSlot.classList.remove("hidden");
-        if (imgEl) {
-          imgEl.src = posterUrl || FALLBACK_IMAGE;
-          imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
-        }
-        videoPlayOverlay.classList.add("hidden");
-      });
+      .catch(() => fallbackToImage());
 
-    viewerVideo.onerror = () => {
-      viewerVideo.classList.add("hidden");
-      viewerVideo.removeAttribute("src");
-      viewerVideo.load();
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      if (imgEl) {
-        imgEl.src = posterUrl || FALLBACK_IMAGE;
-        imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
-      }
-      videoPlayOverlay.classList.add("hidden");
-    };
+    viewerVideo.onerror = () => fallbackToImage();
   });
 }
 
