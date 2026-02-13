@@ -753,7 +753,7 @@ function renderModalViewerByIndex(index) {
     const posterUrl = proxyImageUrl(activeModalProduct?.images?.[0] || FALLBACK_IMAGE);
     modalViewerVideo.poster = posterUrl;
     modalViewerVideo.setAttribute("data-video-src", mediaItem.url || "");
-    modalViewerVideo.src = "";
+    if (mediaItem.url) { modalViewerVideo.src = mediaItem.url; modalViewerVideo.load(); }
     modalViewerVideo.muted = true;
     modalViewerVideo.loop = true;
     modalViewerVideo.playsInline = true;
@@ -800,7 +800,7 @@ function renderModalViewerByIndex(index) {
     };
     modalViewerVideo.onerror = showModalFallback;
     modalViewerVideo.oncanplay = () => { if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; } };
-    tryModalLoad();
+    if (modalMediaIndex === index) tryModalLoad();
     return;
   }
 
@@ -832,9 +832,7 @@ function showModalMediaAt(index) {
   const next = (index + modalMediaList.length) % modalMediaList.length;
   const alreadyOnVideo = modalMediaList[next]?.type === "video" && next === modalMediaIndex;
   if (alreadyOnVideo && modalViewerVideo && !modalViewerVideo.classList.contains("hidden")) {
-    if (modalViewerVideo.src) {
-      modalViewerVideo.play().then(() => modalVideoPlayOverlay?.classList.add("hidden")).catch(() => {});
-    }
+    modalViewerVideo.play().then(() => modalVideoPlayOverlay?.classList.add("hidden")).catch(() => {});
     return;
   }
   if (next === modalMediaIndex) return;

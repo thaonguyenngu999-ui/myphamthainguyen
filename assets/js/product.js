@@ -260,7 +260,7 @@ function renderViewerByIndex(index) {
     const posterUrl = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
     viewerVideo.poster = posterUrl;
     viewerVideo.setAttribute("data-video-src", mediaItem.url || "");
-    viewerVideo.src = "";
+    if (mediaItem.url) { viewerVideo.src = mediaItem.url; viewerVideo.load(); }
     viewerVideo.muted = true;
     viewerVideo.loop = true;
     viewerVideo.playsInline = true;
@@ -292,10 +292,7 @@ function renderViewerByIndex(index) {
     const tryLoadAndPlay = () => {
       const src = viewerVideo.getAttribute("data-video-src");
       if (!src) return;
-      if (!viewerVideo.src) {
-        viewerVideo.src = src;
-        viewerVideo.load();
-      }
+      if (!viewerVideo.src) { viewerVideo.src = src; viewerVideo.load(); }
       videoLoadTimeoutId = setTimeout(showFallback, VIDEO_LOAD_TIMEOUT);
       autoplayBlockedWaiting = false;
       viewerVideo.play()
@@ -316,16 +313,11 @@ function renderViewerByIndex(index) {
     if (!videoObserver && detailViewer) {
       videoObserver = new IntersectionObserver((entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) {
-            if (currentMediaList[currentMediaIndex]?.type === "video" && typeof pendingVideoLoad === "function") pendingVideoLoad();
-          } else {
-            viewerVideo.pause();
-          }
+          if (!e.isIntersecting) viewerVideo.pause();
         });
       }, { rootMargin: "50px", threshold: 0.1 });
       videoObserver.observe(detailViewer);
     }
-    tryLoadAndPlay();
     return;
   }
 
@@ -366,20 +358,18 @@ function setActiveThumb(index) {
 function showMediaAt(index) {
   if (!currentMediaList.length) return;
   const normalizedIndex = (index + currentMediaList.length) % currentMediaList.length;
-  const alreadyOnVideo = currentMediaList[normalizedIndex]?.type === "video" && normalizedIndex === currentMediaIndex;
+  const isVideo = currentMediaList[normalizedIndex]?.type === "video";
+  const alreadyOnVideo = isVideo && normalizedIndex === currentMediaIndex;
   if (alreadyOnVideo && viewerVideo && !viewerVideo.classList.contains("hidden")) {
     autoplayBlockedWaiting = false;
-    if (viewerVideo.src) {
-      viewerVideo.play().then(() => videoPlayOverlay?.classList.add("hidden")).catch(() => {});
-    } else if (typeof pendingVideoLoad === "function") {
-      pendingVideoLoad();
-    }
+    if (typeof pendingVideoLoad === "function") pendingVideoLoad();
     return;
   }
   if (normalizedIndex === currentMediaIndex) return;
   currentMediaIndex = normalizedIndex;
   renderViewerByIndex(normalizedIndex);
   setActiveThumb(normalizedIndex);
+  if (isVideo && typeof pendingVideoLoad === "function") pendingVideoLoad();
 }
 
 function showNextMedia() {
@@ -509,12 +499,16 @@ function bindMediaNavigation() {
   videoPlayOverlay?.addEventListener("click", (e) => {
     e.stopPropagation();
     autoplayBlockedWaiting = false;
-    if (viewerVideo.src) {
-      viewerVideo.play()
-        .then(() => videoPlayOverlay.classList.add("hidden"))
-        .catch(() => {});
-    } else if (typeof pendingVideoLoad === "function") {
-      pendingVideoLoad();
+    if (typeof pendingVideoLoad === "function") pendingVideoLoad();
+    else if (viewerVideo.src) viewerVideo.play().then(() => videoPlayOverlay?.classList.add("hidden")).catch(() => {});
+  });
+  detailViewer?.addEventListener("click", (e) => {
+    if (e.target.closest?.("button.viewer-nav") || e.target.closest?.(".gallery-badges")) return;
+    if (currentMediaList[currentMediaIndex]?.type !== "video") return;
+    if (!viewerVideo?.classList.contains("hidden")) {
+      autoplayBlockedWaiting = false;
+      if (typeof pendingVideoLoad === "function") pendingVideoLoad();
+      else if (viewerVideo.src) viewerVideo.play().then(() => videoPlayOverlay?.classList.add("hidden")).catch(() => {});
     }
   });
 }
