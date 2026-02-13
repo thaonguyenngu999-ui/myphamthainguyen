@@ -312,10 +312,16 @@ function renderMediaGallery(product) {
 }
 
 function bindMediaNavigation() {
-  const prev = document.getElementById("prevMediaBtn");
-  const next = document.getElementById("nextMediaBtn");
-  if (prev) prev.addEventListener("click", function (e) { e.preventDefault(); showPrevMedia(); });
-  if (next) next.addEventListener("click", function (e) { e.preventDefault(); showNextMedia(); });
+  const gallery = document.getElementById("productGallery");
+  if (!gallery) return;
+  gallery.addEventListener("click", function (e) {
+    const btn = e.target.closest?.("button.viewer-nav");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (btn.id === "prevMediaBtn") showPrevMedia();
+    else if (btn.id === "nextMediaBtn") showNextMedia();
+  });
 
   detailViewer?.addEventListener("mousedown", (event) => {
     isPointerDown = true;

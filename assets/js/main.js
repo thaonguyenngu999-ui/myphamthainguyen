@@ -792,11 +792,18 @@ function renderModalMedia(product) {
     modalThumbs.appendChild(btn);
   });
 
-  const prevBtn = document.getElementById("modalPrevBtn");
-  const nextBtn = document.getElementById("modalNextBtn");
   const gallery = document.getElementById("modalGallery");
-  if (prevBtn) prevBtn.onclick = (e) => { e.preventDefault(); showModalMediaAt(modalMediaIndex - 1); };
-  if (nextBtn) nextBtn.onclick = (e) => { e.preventDefault(); showModalMediaAt(modalMediaIndex + 1); };
+  if (gallery && !gallery.dataset.navBound) {
+    gallery.dataset.navBound = "1";
+    gallery.addEventListener("click", (e) => {
+      const btn = e.target.closest?.("button.viewer-nav");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (btn.id === "modalPrevBtn") showModalMediaAt(modalMediaIndex - 1);
+      else if (btn.id === "modalNextBtn") showModalMediaAt(modalMediaIndex + 1);
+    });
+  }
 
   if (gallery && !gallery.dataset.swipeBound) {
     gallery.dataset.swipeBound = "1";

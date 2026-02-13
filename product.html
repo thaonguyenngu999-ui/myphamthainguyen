@@ -290,8 +290,17 @@
           });
           viewerThumbs.appendChild(btn);
         });
-        if (prevBtn) prevBtn.onclick = function () { setActive(idx - 1); };
-        if (nextBtn) nextBtn.onclick = function () { setActive(idx + 1); };
+        var galleryEl = document.getElementById("productGallery");
+        if (galleryEl) {
+          galleryEl.addEventListener("click", function (ev) {
+            var b = ev.target && ev.target.closest ? ev.target.closest("button.viewer-nav") : null;
+            if (!b) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (b.id === "prevMediaBtn") setActive(idx - 1);
+            else if (b.id === "nextMediaBtn") setActive(idx + 1);
+          });
+        }
         setActive(0);
       }
 

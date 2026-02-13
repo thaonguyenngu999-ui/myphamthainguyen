@@ -534,7 +534,7 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 4;
+  z-index: 10;
   width: 40px;
   height: 40px;
   border: none;
@@ -545,6 +545,9 @@ body {
   display: grid;
   place-items: center;
   cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
 }
