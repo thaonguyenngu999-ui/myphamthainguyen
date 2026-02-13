@@ -1,6 +1,15 @@
 const STORAGE_KEY = "mypham_products";
 const DATA_URL = "assets/data/products.json";
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
+const IMAGE_PROXY = "https://wsrv.nl/?url=";
+
+function proxyImageUrl(url) {
+  if (!url || typeof url !== "string" || url.startsWith("data:") || url.includes("placehold.co")) return url;
+  if (url.includes("img.susercontent.com") || url.includes("susercontent.com")) {
+    return IMAGE_PROXY + encodeURIComponent(url.trim()) + "&n=-1";
+  }
+  return url;
+}
 const BLOG_STORAGE_KEY = "mypham_blog_content";
 const BLOG_DATA_URL = "assets/data/blogs.json";
 const REMOTE_PRODUCTS_FALLBACK_URLS = [
@@ -310,13 +319,14 @@ function sortByBestDeal(products) {
 
 function buildProductCardHtml(product, extraClass = "") {
   const detailUrl = buildProductDetailUrl(product);
+  const imgUrl = proxyImageUrl(product.images?.[0] || product.image || FALLBACK_IMAGE);
   return `
     <article class="product-card ${extraClass}" data-id="${product.id}">
       <a class="product-link" href="${detailUrl}" target="_blank" rel="noopener">
         <div class="product-image-wrap" data-image-click="1">
           <img
             class="product-image"
-            src="${product.images[0] || product.image}"
+            src="${imgUrl}"
             alt="${product.name}"
             loading="lazy"
             decoding="async"
@@ -460,7 +470,7 @@ function renderPromoSlides(products) {
     .map(
       (slide, index) => `
         <article class="promo-slide ${index === 0 ? "active" : ""}" data-index="${index}" data-id="${slide.id}">
-          <img src="${slide.image}" alt="${slide.title}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" />
+          <img src="${proxyImageUrl(slide.image)}" alt="${slide.title}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" />
           <div class="promo-slide__overlay">
             <span class="promo-slide__badge">Deal ${Math.max(slide.discount, 10)}%</span>
             <h3>${slide.title}</h3>
@@ -720,17 +730,15 @@ function renderModalViewerByIndex(index) {
     modalViewerVideo.playsInline = true;
     modalViewerVideo.setAttribute("playsinline", "");
     modalViewerVideo.setAttribute("muted", "");
-    modalViewerVideo.setAttribute("preload", "none");
-    const posterUrl = activeModalProduct?.images?.[0] || FALLBACK_IMAGE;
-    if (modalViewerVideo.poster !== posterUrl) {
-      modalViewerVideo.poster = posterUrl;
-    }
-    if (modalViewerVideo.src !== mediaItem.url) {
-      modalViewerVideo.src = mediaItem.url;
-    }
-    modalVideoPlayOverlay?.classList.remove("hidden");
+    modalViewerVideo.poster = proxyImageUrl(activeModalProduct?.images?.[0] || FALLBACK_IMAGE);
+    modalViewerVideo.src = mediaItem.url;
+    modalViewerVideo.load();
+    modalViewerVideo.play()
+      .then(() => modalVideoPlayOverlay?.classList.add("hidden"))
+      .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
     modalViewerVideo.onerror = () => {
       modalViewerVideo.classList.add("hidden");
+      modalViewerVideo.src = "";
       if (imageSlot) imageSlot.classList.remove("hidden");
       if (viewerImg) { viewerImg.src = FALLBACK_IMAGE; }
       modalVideoPlayOverlay?.classList.add("hidden");
@@ -744,10 +752,11 @@ function renderModalViewerByIndex(index) {
   modalViewerVideo.src = "";
   modalVideoPlayOverlay?.classList.add("hidden");
 
-  const url = String(mediaItem.url || FALLBACK_IMAGE).trim();
+  const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
+  const url = proxyImageUrl(rawUrl);
   const altText = `${activeModalProduct?.name || "Sản phẩm"} - ảnh ${index + 1}/${modalMediaList.length}`;
   if (viewerImg) {
-    if (viewerImg.src !== url && !viewerImg.src.includes(url.split("?")[0])) {
+    if (viewerImg.src !== url) {
       viewerImg.loading = modalMediaIndex === 0 ? "eager" : "lazy";
       viewerImg.onerror = () => { viewerImg.src = FALLBACK_IMAGE; viewerImg.onerror = null; };
       viewerImg.src = url;
@@ -788,7 +797,8 @@ function renderModalMedia(product) {
       btn.classList.add("thumb-video");
     } else {
       const altThumb = `${activeModalProduct?.name || "Sản phẩm"} - ảnh ${index + 1}`;
-      btn.innerHTML = `<img src="${item.url}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" decoding="async" tabindex="-1" referrerpolicy="no-referrer" />`;
+      const thumbUrl = proxyImageUrl(item.url);
+      btn.innerHTML = `<img src="${thumbUrl}" alt="${altThumb.replace(/"/g, "&quot;")}" loading="lazy" decoding="async" tabindex="-1" />`;
     }
 
     btn.addEventListener("click", (e) => {
@@ -1292,9 +1302,6 @@ function bindEvents() {
   });
 
   modalVideoPlayOverlay?.addEventListener("click", () => {
-    if (modalViewerVideo.src && !modalViewerVideo.src.includes("blob:")) {
-      modalViewerVideo.load();
-    }
     modalViewerVideo.play()
       .then(() => modalVideoPlayOverlay.classList.add("hidden"))
       .catch(() => {});

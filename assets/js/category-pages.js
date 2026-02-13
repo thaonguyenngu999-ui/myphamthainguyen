@@ -7,7 +7,16 @@ const REMOTE_PRODUCTS_FALLBACK_URLS = [
   "https://cdn.jsdelivr.net/gh/thaonguyenngu999-ui/myphamthainguyen@main/assets/data/products.json"
 ].filter(Boolean);
 const FALLBACK_IMAGE = "https://placehold.co/600x600?text=My+Pham";
+const IMAGE_PROXY = "https://wsrv.nl/?url=";
 const PAGE_SIZE = 20;
+
+function proxyImageUrl(url) {
+  if (!url || typeof url !== "string" || url.startsWith("data:") || url.includes("placehold.co")) return url || FALLBACK_IMAGE;
+  if (url.includes("img.susercontent.com") || url.includes("susercontent.com")) {
+    return IMAGE_PROXY + encodeURIComponent(String(url).trim()) + "&n=-1";
+  }
+  return url;
+}
 
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
@@ -308,7 +317,7 @@ function renderCards(reset = false) {
         <article class="product-card" data-id="${item.id}">
           <a class="product-link" href="${buildProductDetailUrl(item)}" target="_blank" rel="noopener">
             <div class="product-image-wrap">
-              <img class="product-image" src="${item.image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" />
+              <img class="product-image" src="${proxyImageUrl(item.image)}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" />
               ${discountBadge}
             </div>
           </a>

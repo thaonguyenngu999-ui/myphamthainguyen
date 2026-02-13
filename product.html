@@ -49,7 +49,7 @@
             <div class="viewer-image-slot" id="viewerImageSlot">
               <img id="viewerImage" src="" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" />
               </div>
-              <video id="viewerVideo" controls preload="none" playsinline muted loop class="hidden"></video>
+              <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
               <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
                 <span class="material-icons" aria-hidden="true">play_arrow</span>
               </button>
@@ -241,21 +241,28 @@
               viewerVideo.playsInline = true;
               viewerVideo.setAttribute("playsinline", "");
               viewerVideo.setAttribute("muted", "");
-              viewerVideo.setAttribute("preload", "none");
               var posterUrl = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-              if (viewerVideo.poster !== posterUrl) {
-                viewerVideo.poster = posterUrl;
+              if (posterUrl.includes("susercontent.com")) {
+                posterUrl = "https://wsrv.nl/?url=" + encodeURIComponent(posterUrl) + "&n=-1";
               }
-              if (viewerVideo.src !== item.url) {
-                viewerVideo.src = item.url;
-              }
-              if (videoOverlay) videoOverlay.classList.remove("hidden");
+              viewerVideo.poster = posterUrl;
+              viewerVideo.src = item.url;
+              viewerVideo.load();
+              viewerVideo.play().then(function () {
+                if (videoOverlay) videoOverlay.classList.add("hidden");
+              }).catch(function () {
+                if (videoOverlay) videoOverlay.classList.remove("hidden");
+              });
               viewerVideo.onerror = function () {
                 viewerVideo.classList.add("hidden");
                 viewerVideo.src = "";
                 if (videoOverlay) videoOverlay.classList.add("hidden");
                 imageSlot.classList.remove("hidden");
-                viewerImg.src = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
+                var fallbackImg = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
+                if (fallbackImg.includes("susercontent.com")) {
+                  fallbackImg = "https://wsrv.nl/?url=" + encodeURIComponent(fallbackImg) + "&n=-1";
+                }
+                viewerImg.src = fallbackImg;
               };
             }
           } else {
@@ -267,7 +274,10 @@
             }
             imageSlot.classList.remove("hidden");
             var url = item.url || FALLBACK_IMG;
-            if (viewerImg.src !== url && !viewerImg.src.includes(url.split("?")[0])) {
+            if (url.includes("susercontent.com")) {
+              url = "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&n=-1";
+            }
+            if (viewerImg.src !== url) {
               viewerImg.loading = idx === 0 ? "eager" : "lazy";
               viewerImg.onerror = function () { this.src = FALLBACK_IMG; this.onerror = null; };
               viewerImg.src = url;
@@ -286,7 +296,11 @@
             btn.innerHTML = "<span class=\"thumb-video-icon\">&#9654;</span><span class=\"thumb-video-text\">Video</span>";
           } else {
             var altThumb = (product.name || "San pham") + " - anh " + (i + 1);
-            btn.innerHTML = "<img src=\"" + (item.url || "").replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" decoding=\"async\" tabindex=\"-1\" referrerpolicy=\"no-referrer\" />";
+            var thumbUrl = item.url || "";
+            if (thumbUrl.includes("susercontent.com")) {
+              thumbUrl = "https://wsrv.nl/?url=" + encodeURIComponent(thumbUrl) + "&n=-1";
+            }
+            btn.innerHTML = "<img src=\"" + thumbUrl.replace(/"/g, "&quot;") + "\" alt=\"" + altThumb.replace(/"/g, "&quot;") + "\" loading=\"lazy\" decoding=\"async\" tabindex=\"-1\" />";
           }
           btn.addEventListener("click", function (ev) {
             ev.preventDefault();
