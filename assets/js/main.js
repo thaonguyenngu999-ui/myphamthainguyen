@@ -695,7 +695,9 @@ function closeModal() {
   modalViewerVideo.pause();
   modalViewerVideo.classList.add("hidden");
   modalViewerVideo.src = "";
+  modalViewerVideo.removeAttribute("data-video-src");
   modalVideoPlayOverlay?.classList.add("hidden");
+  document.getElementById("modalVideoFallback")?.classList.add("hidden");
   activeModalProduct = null;
   modalMediaList = [];
   modalMediaIndex = 0;
@@ -723,33 +725,68 @@ function renderModalViewerByIndex(index) {
   if (nextBtn) nextBtn.classList.toggle("hidden", !showNav);
 
   if (mediaItem.type === "video") {
+    const modalVideoFallback = document.getElementById("modalVideoFallback");
+    const modalVideoFallbackLink = document.getElementById("modalVideoFallbackLink");
+    const modalVideoFallbackPoster = document.querySelector("#modalVideoFallback .video-fallback-poster");
     if (imageSlot) imageSlot.classList.add("hidden");
-    modalViewerVideo.classList.remove("hidden");
+    modalVideoFallback?.classList.add("hidden");
+    modalVideoFallbackLink?.removeAttribute("href");
+    let modalVideoTimeout = null;
+    const posterUrl = proxyImageUrl(activeModalProduct?.images?.[0] || FALLBACK_IMAGE);
+    modalViewerVideo.poster = posterUrl;
+    modalViewerVideo.setAttribute("data-video-src", mediaItem.url || "");
+    modalViewerVideo.src = "";
     modalViewerVideo.muted = true;
     modalViewerVideo.loop = true;
     modalViewerVideo.playsInline = true;
     modalViewerVideo.setAttribute("playsinline", "");
     modalViewerVideo.setAttribute("muted", "");
-    modalViewerVideo.poster = proxyImageUrl(activeModalProduct?.images?.[0] || FALLBACK_IMAGE);
-    modalViewerVideo.src = mediaItem.url;
-    modalViewerVideo.load();
-    modalViewerVideo.play()
-      .then(() => modalVideoPlayOverlay?.classList.add("hidden"))
-      .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
-    modalViewerVideo.onerror = () => {
+    modalViewerVideo.preload = "none";
+    modalViewerVideo.classList.remove("hidden");
+    modalVideoPlayOverlay?.classList.remove("hidden");
+    const showModalFallback = () => {
+      if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; }
       modalViewerVideo.classList.add("hidden");
       modalViewerVideo.src = "";
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      if (viewerImg) { viewerImg.src = FALLBACK_IMAGE; }
+      modalViewerVideo.removeAttribute("data-video-src");
       modalVideoPlayOverlay?.classList.add("hidden");
+      if (modalVideoFallback && modalVideoFallbackPoster) {
+        modalVideoFallbackPoster.src = posterUrl;
+        modalVideoFallbackPoster.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+        if (modalVideoFallbackLink && activeModalProduct?.affiliateLink) {
+          modalVideoFallbackLink.href = withAffiliateTracking(activeModalProduct.affiliateLink);
+        }
+        modalVideoFallback.classList.remove("hidden");
+      } else if (imageSlot && viewerImg) {
+        imageSlot.classList.remove("hidden");
+        viewerImg.src = posterUrl;
+      }
     };
+    const tryModalLoad = () => {
+      const src = modalViewerVideo.getAttribute("data-video-src");
+      if (!src || modalViewerVideo.src) return;
+      modalViewerVideo.src = src;
+      modalViewerVideo.load();
+      modalVideoTimeout = setTimeout(showModalFallback, 5000);
+      modalViewerVideo.play()
+        .then(() => {
+          if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; }
+          modalVideoPlayOverlay?.classList.add("hidden");
+        })
+        .catch(() => modalVideoPlayOverlay?.classList.remove("hidden"));
+    };
+    modalViewerVideo.onerror = showModalFallback;
+    modalViewerVideo.oncanplay = () => { if (modalVideoTimeout) { clearTimeout(modalVideoTimeout); modalVideoTimeout = null; } };
+    tryModalLoad();
     return;
   }
 
   if (imageSlot) imageSlot.classList.remove("hidden");
+  document.getElementById("modalVideoFallback")?.classList.add("hidden");
   modalViewerVideo.pause();
   modalViewerVideo.classList.add("hidden");
   modalViewerVideo.src = "";
+  modalViewerVideo.removeAttribute("data-video-src");
   modalVideoPlayOverlay?.classList.add("hidden");
 
   const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();

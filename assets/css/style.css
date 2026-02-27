@@ -17,10 +17,6 @@
   box-sizing: border-box;
 }
 
-html {
-  overflow-x: hidden;
-}
-
 body {
   margin: 0;
   font-family: "Be Vietnam Pro", "Segoe UI", Roboto, Arial, sans-serif;
@@ -32,7 +28,6 @@ body {
 
 .container {
   width: min(1100px, 92%);
-  max-width: 100vw;
   margin: 0 auto;
   padding: 0 8px;
 }
@@ -89,6 +84,16 @@ body {
   text-decoration: none;
   white-space: nowrap;
   font-size: 1.06rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .header-search {
@@ -460,16 +465,9 @@ body {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 16px;
-  min-width: 0;
-  overflow-x: hidden;
 }
 
 /* Gallery layout: hero + thumbs, no overlap */
-.gallery-wrap,
-.detail-media {
-  min-width: 0;
-  max-width: 100%;
-}
 
 .gallery-wrap {
   display: flex;
@@ -496,13 +494,12 @@ body {
   aspect-ratio: 1 / 1;
   max-width: 560px;
   margin: 0 auto;
-  min-height: 180px;
-  max-height: min(100vw, 500px);
+  min-height: 200px;
+  max-height: 100vw;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  flex-shrink: 0;
 }
 
 .viewer-image-slot {
@@ -518,10 +515,9 @@ body {
 .viewer-image-slot img {
   width: 100%;
   height: 100%;
-  min-height: 100%;
   object-fit: contain;
   display: block;
-  background: #f8fafc;
+  background: #fff;
   transition: opacity 0.3s ease;
 }
 
@@ -700,6 +696,50 @@ body {
   line-height: 1;
 }
 
+.video-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  z-index: 4;
+}
+
+.video-fallback-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+
+.video-fallback .btn-watch-shopee {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #ee4d2d;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(238, 77, 45, 0.35);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.video-fallback .btn-watch-shopee:hover {
+  background: #d84322;
+  transform: translateX(-50%) scale(1.02);
+}
+
 .detail-rating-row {
   display: flex;
   align-items: center;
@@ -724,14 +764,6 @@ body {
 .detail-short-desc {
   color: #334155;
   font-size: 0.92rem;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.detail-info {
-  min-width: 0;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
 }
 
 .detail-info h1 {
@@ -739,8 +771,6 @@ body {
   font-size: clamp(1.5rem, 2.1vw, 2.05rem);
   line-height: 1.22;
   letter-spacing: -0.01em;
-  word-break: break-word;
-  overflow-wrap: break-word;
 }
 
 .detail-body {
@@ -768,6 +798,61 @@ body {
 
 .product-page {
   background: #f8fafc;
+  overflow-x: hidden;
+}
+
+/* Fix mobile layout: chỉ áp dụng trang chi tiết sản phẩm, không ảnh hưởng trang chủ */
+.product-page .container {
+  max-width: 100vw;
+}
+
+.product-page .detail-top {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.product-page .detail-media,
+.product-page .gallery-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-page .detail-info {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.product-page .detail-info h1 {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.product-page .detail-short-desc {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.product-page .product-shell {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.product-page .product-actions,
+.product-page .detail-actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-page .gallery-hero {
+  min-height: 180px;
+  max-height: min(100vw, 500px);
+  flex-shrink: 0;
+}
+
+.product-page .viewer-image-slot img {
+  min-height: 100%;
+  background: #f8fafc;
 }
 
 .product-main {
@@ -793,8 +878,6 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 14px;
-  min-width: 0;
-  overflow-x: hidden;
 }
 
 .product-actions {
@@ -811,8 +894,6 @@ body {
   justify-content: flex-start;
   gap: 16px;
   flex-wrap: wrap;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .btn-buy-now,
@@ -1510,8 +1591,8 @@ body {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .logo {
-    font-size: 1.2rem;
+  .logo img {
+    height: 44px;
   }
 }
 
@@ -1575,11 +1656,18 @@ body {
 @media (max-width: 520px) {
   .container {
     width: min(100%, 96%);
+  }
+
+  .product-page .container {
     padding: 0 12px;
   }
 
   .gallery-hero {
     min-height: 0;
+  }
+
+  .product-page .gallery-hero {
+    min-height: 160px;
   }
 
   .detail-thumbs {
@@ -1657,6 +1745,10 @@ body {
   color: #0f172a;
   font-size: 1.08rem;
   font-weight: 800;
+}
+
+.home-page .logo img {
+  height: 44px;
 }
 
 .home-page .header-search {
@@ -1925,9 +2017,17 @@ body {
   justify-content: center;
 }
 
-.home-page .promo-nav.prev { left: 10px; }
-.home-page .promo-nav.next { right: 10px; }
-.home-page .promo-nav .material-icons { font-size: 24px; }
+.home-page .promo-nav.prev {
+  left: 10px;
+}
+
+.home-page .promo-nav.next {
+  right: 10px;
+}
+
+.home-page .promo-nav .material-icons {
+  font-size: 24px;
+}
 
 .home-page .promo-dots {
   margin-top: 8px;
@@ -2444,6 +2544,10 @@ body {
     font-size: 1rem;
   }
 
+  .home-page .logo img {
+    height: 36px;
+  }
+
   .home-page .header-search {
     grid-area: search;
   }
@@ -2455,7 +2559,9 @@ body {
     min-width: 0;
   }
 
-  .home-page .header-actions a[aria-label="Giỏ hàng"] { display: none; }
+  .home-page .header-actions a[aria-label="Giỏ hàng"] {
+    display: none;
+  }
 
   .home-page .category-toggle-btn {
     padding: 6px 10px;
@@ -2980,14 +3086,14 @@ body {
   transition: transform 0.3s ease;
 }
 
-.cat-group.active > .cat-parent-btn {
+.cat-group.active>.cat-parent-btn {
   background: #fff3e0;
   color: #ee4d2d;
   border-left: 4px solid #ee4d2d;
   padding-left: 8px;
 }
 
-.cat-group.active > .cat-parent-btn .cat-arrow {
+.cat-group.active>.cat-parent-btn .cat-arrow {
   transform: rotate(90deg);
 }
 

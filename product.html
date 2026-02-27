@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,22 +10,26 @@
   <meta id="ogDescription" property="og:description" content="Xem chi tiết sản phẩm và mua nhanh qua link affiliate." />
   <meta property="og:type" content="product" />
   <meta id="ogUrl" property="og:url" content="https://myphamthainguyen.com/product.html" />
-  <meta id="ogImage" property="og:image" content="https://placehold.co/600x600?text=My+Pham" />
+  <meta id="ogImage" property="og:image" content="https://myphamthainguyen.com/assets/images/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta id="twitterTitle" name="twitter:title" content="Chi tiết sản phẩm" />
-  <meta id="twitterDescription" name="twitter:description" content="Xem chi tiết sản phẩm và mua nhanh qua link affiliate." />
-  <meta id="twitterImage" name="twitter:image" content="https://placehold.co/600x600?text=My+Pham" />
+  <meta id="twitterDescription" name="twitter:description"
+    content="Xem chi tiết sản phẩm và mua nhanh qua link affiliate." />
+  <meta id="twitterImage" name="twitter:image" content="https://myphamthainguyen.com/assets/images/logo.png" />
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+  <link rel="apple-touch-icon" href="assets/images/logo.png" />
   <link id="canonicalLink" rel="canonical" href="product.html" />
-  <script src="assets/js/seo-config.js?v=20260211"></script>
-  <script src="assets/js/seo-global.js?v=20260211"></script>
+  <script src="assets/js/seo-config.js?v=20260227" defer></script>
+  <script src="assets/js/seo-global.js?v=20260227" defer></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="assets/css/style.css?v=20260218" />
 </head>
+
 <body class="product-page">
   <header class="site-header">
     <div class="container header-inner">
-      <a class="logo" href="index.html">Mỹ Phẩm Thái Nguyên</a>
+      <a class="logo" href="index.html"><img src="assets/images/logo.png" alt="Mỹ Phẩm Thái Nguyên" /></a>
       <nav class="header-actions">
         <a href="index.html">Trang chu</a>
         <a href="admin.html">Dang ky / Dang nhap</a>
@@ -46,13 +51,21 @@
         <div class="detail-media gallery-wrap">
           <div class="detail-viewer product-gallery" id="productGallery">
             <div class="gallery-hero" aria-hidden="false">
-            <div class="viewer-image-slot" id="viewerImageSlot">
-              <img id="viewerImage" src="https://placehold.co/600x600?text=My+Pham" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" />
+              <div class="viewer-image-slot" id="viewerImageSlot">
+                <img id="viewerImage" src="https://placehold.co/600x600?text=My+Pham" alt="" loading="eager"
+                  decoding="async" referrerpolicy="no-referrer" />
               </div>
-              <video id="viewerVideo" controls preload="metadata" playsinline muted loop class="hidden"></video>
-              <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button" aria-label="Phát video sản phẩm">
+              <video id="viewerVideo" controls preload="none" playsinline muted loop class="hidden"
+                data-video-src=""></video>
+              <button id="videoPlayOverlay" class="video-play-overlay hidden" type="button"
+                aria-label="Phát video sản phẩm">
                 <span class="material-icons" aria-hidden="true">play_arrow</span>
               </button>
+              <div id="videoFallback" class="video-fallback hidden">
+                <img class="video-fallback-poster" src="" alt="Video sản phẩm" />
+                <a id="videoFallbackLink" class="btn-watch-shopee" href="#" target="_blank" rel="noopener">Xem video
+                  trên Shopee</a>
+              </div>
               <div class="gallery-badges" aria-label="Badges sản phẩm">
                 <span class="badge">100% ảnh tự chụp</span>
                 <span class="badge">Handmade in Vietnam</span>
@@ -234,7 +247,12 @@
           var item = mediaList[idx];
           if (item.type === "video") {
             imageSlot.classList.add("hidden");
+            var videoFallbackEl = document.getElementById("videoFallback");
+            var videoFallbackLinkEl = document.getElementById("videoFallbackLink");
+            var videoFallbackPosterEl = videoFallbackEl && videoFallbackEl.querySelector(".video-fallback-poster");
+            if (videoFallbackEl) videoFallbackEl.classList.add("hidden");
             if (viewerVideo) {
+              viewerVideo.preload = "none";
               viewerVideo.classList.remove("hidden");
               viewerVideo.muted = true;
               viewerVideo.loop = true;
@@ -242,30 +260,46 @@
               viewerVideo.setAttribute("playsinline", "");
               viewerVideo.setAttribute("muted", "");
               var posterUrl = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-              if (posterUrl.includes("susercontent.com")) {
-                posterUrl = "https://wsrv.nl/?url=" + encodeURIComponent(posterUrl) + "&n=-1";
-              }
+              if (posterUrl.includes("susercontent.com")) posterUrl = "https://wsrv.nl/?url=" + encodeURIComponent(posterUrl) + "&n=-1";
               viewerVideo.poster = posterUrl;
-              viewerVideo.src = item.url;
-              viewerVideo.load();
-              viewerVideo.play().then(function () {
-                if (videoOverlay) videoOverlay.classList.add("hidden");
-              }).catch(function () {
-                if (videoOverlay) videoOverlay.classList.remove("hidden");
-              });
-              viewerVideo.onerror = function () {
+              viewerVideo.src = "";
+              if (videoOverlay) videoOverlay.classList.remove("hidden");
+              var videoTimeout = null;
+              var showFallback = function () {
+                if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; }
                 viewerVideo.classList.add("hidden");
                 viewerVideo.src = "";
                 if (videoOverlay) videoOverlay.classList.add("hidden");
-                imageSlot.classList.remove("hidden");
-                var fallbackImg = product.images && product.images[0] ? product.images[0] : FALLBACK_IMG;
-                if (fallbackImg.includes("susercontent.com")) {
-                  fallbackImg = "https://wsrv.nl/?url=" + encodeURIComponent(fallbackImg) + "&n=-1";
+                if (videoFallbackEl && videoFallbackPosterEl) {
+                  videoFallbackPosterEl.src = posterUrl;
+                  if (videoFallbackLinkEl && product.affiliateLink) videoFallbackLinkEl.href = product.affiliateLink;
+                  videoFallbackEl.classList.remove("hidden");
+                } else {
+                  imageSlot.classList.remove("hidden");
+                  viewerImg.src = posterUrl;
                 }
-                viewerImg.src = fallbackImg;
               };
+              viewerVideo.onerror = showFallback;
+              viewerVideo.oncanplay = function () { if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; } };
+              var tryLoad = function () {
+                if (viewerVideo.src) return;
+                viewerVideo.src = item.url;
+                viewerVideo.load();
+                videoTimeout = setTimeout(showFallback, 5000);
+                viewerVideo.play().then(function () {
+                  if (videoTimeout) { clearTimeout(videoTimeout); videoTimeout = null; }
+                  if (videoOverlay) videoOverlay.classList.add("hidden");
+                }).catch(function () { if (videoOverlay) videoOverlay.classList.remove("hidden"); });
+              };
+              var galleryRect = document.getElementById("productGallery");
+              if (galleryRect) {
+                var rect = galleryRect.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) tryLoad(); else setTimeout(function () { tryLoad(); }, 300);
+              } else tryLoad();
             }
           } else {
+            var fb = document.getElementById("videoFallback");
+            if (fb) fb.classList.add("hidden");
             if (viewerVideo) {
               viewerVideo.pause();
               viewerVideo.classList.add("hidden");
@@ -375,4 +409,5 @@
     }());
   </script>
 </body>
+
 </html>

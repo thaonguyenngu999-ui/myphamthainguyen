@@ -1,25 +1,99 @@
 <!doctype html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đang chuyển hướng...</title>
+  <title>Trang không tìm thấy | Mỹ Phẩm Thái Nguyên</title>
   <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+  <style>
+    .error-page {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .error-code {
+      font-size: 6rem;
+      font-weight: 800;
+      color: #ee4d2d;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .error-title {
+      font-size: 1.5rem;
+      margin: 16px 0 8px;
+      color: #1f2328;
+    }
+
+    .error-desc {
+      color: #6b7280;
+      max-width: 480px;
+      margin: 0 auto 24px;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .error-actions a {
+      padding: 12px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .error-btn-primary {
+      background: #ee4d2d;
+      color: #fff;
+    }
+
+    .error-btn-outline {
+      background: #fff;
+      color: #1f2328;
+      border: 1px solid #e5e7eb;
+    }
+  </style>
 </head>
-<body>
+
+<body class="home-page">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html"><img src="assets/images/logo.png" alt="Mỹ Phẩm Thái Nguyên" /></a>
+    </div>
+  </header>
+
+  <main class="container error-page">
+    <p class="error-code">404</p>
+    <h1 class="error-title">Trang không tìm thấy</h1>
+    <p class="error-desc">Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển. Hãy thử quay lại trang chủ hoặc
+      tìm sản phẩm mới.</p>
+    <div class="error-actions">
+      <a class="error-btn-primary" href="index.html">Về trang chủ</a>
+      <a class="error-btn-outline" href="san-pham.html">Xem sản phẩm</a>
+    </div>
+  </main>
+
   <script>
-    (function redirectPrettyProductPath() {
-      var pathname = window.location.pathname || "";
-      var match = pathname.match(/^(.*)\/san-pham\/([^/?#]+)\/?$/i);
+    // Redirect pretty product URLs: /san-pham/{slug} → /product.html?slug={slug}
+    (function () {
+      var match = location.pathname.match(/\/san-pham\/([^/?#]+)\/?$/i);
       if (match) {
-        var basePath = match[1] || "";
-        var slug = match[2] || "";
-        var target = (basePath || "") + "/product.html?slug=" + encodeURIComponent(decodeURIComponent(slug));
-        window.location.replace(target);
-        return;
+        var slug = decodeURIComponent(match[1]).replace(/\.html$/i, '');
+        location.replace(location.origin + '/product.html?slug=' + encodeURIComponent(slug));
       }
-      window.location.replace((window.location.pathname || "/").replace(/\/404\.html$/i, "/index.html"));
-    }());
+    })();
   </script>
 </body>
+
 </html>

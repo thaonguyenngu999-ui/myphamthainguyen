@@ -17,6 +17,13 @@ const REMOTE_PRODUCTS_FALLBACK_URLS = [
 
 const viewerVideo = document.getElementById("viewerVideo");
 const videoPlayOverlay = document.getElementById("videoPlayOverlay");
+const videoFallback = document.getElementById("videoFallback");
+const videoFallbackLink = document.getElementById("videoFallbackLink");
+const videoFallbackPoster = document.querySelector("#videoFallback .video-fallback-poster");
+const VIDEO_LOAD_TIMEOUT = 5000;
+let videoLoadTimeoutId = null;
+let videoObserver = null;
+let pendingVideoLoad = null;
 const viewerThumbs = document.getElementById("viewerThumbs");
 const detailViewer = document.querySelector(".detail-viewer");
 const prevMediaBtn = document.getElementById("prevMediaBtn");
@@ -218,36 +225,85 @@ function renderViewerByIndex(index) {
   const imgEl = document.getElementById("viewerImage");
   if (mediaItem.type === "video") {
     if (imageSlot) imageSlot.classList.add("hidden");
-    viewerVideo.classList.remove("hidden");
+    videoFallback?.classList.add("hidden");
+    videoFallbackLink?.removeAttribute("href");
+    if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
+    const posterUrl = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
+    viewerVideo.poster = posterUrl;
+    viewerVideo.setAttribute("data-video-src", mediaItem.url || "");
+    viewerVideo.src = "";
     viewerVideo.muted = true;
     viewerVideo.loop = true;
     viewerVideo.playsInline = true;
     viewerVideo.setAttribute("playsinline", "");
     viewerVideo.setAttribute("muted", "");
-    viewerVideo.poster = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
-    viewerVideo.src = mediaItem.url;
-    viewerVideo.load();
-    viewerVideo.play()
-      .then(() => videoPlayOverlay?.classList.add("hidden"))
-      .catch(() => videoPlayOverlay?.classList.remove("hidden"));
-    viewerVideo.onerror = () => {
+    viewerVideo.preload = "none";
+    viewerVideo.classList.remove("hidden");
+    videoPlayOverlay?.classList.remove("hidden");
+    videoPlayOverlay?.classList.remove("hidden");
+    const showFallback = () => {
+      if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
       viewerVideo.classList.add("hidden");
       viewerVideo.src = "";
-      if (imageSlot) imageSlot.classList.remove("hidden");
-      if (imgEl) {
-        imgEl.src = proxyImageUrl(activeProduct?.images?.[0] || FALLBACK_IMAGE);
+      viewerVideo.removeAttribute("data-video-src");
+      videoPlayOverlay?.classList.add("hidden");
+      if (videoFallback && videoFallbackPoster) {
+        videoFallbackPoster.src = posterUrl;
+        videoFallbackPoster.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
+        if (videoFallbackLink && activeProduct?.affiliateLink) {
+          videoFallbackLink.href = withAffiliateTracking(activeProduct.affiliateLink);
+        }
+        videoFallback.classList.remove("hidden");
+      } else if (imageSlot && imgEl) {
+        imageSlot.classList.remove("hidden");
+        imgEl.src = posterUrl;
         imgEl.onerror = function () { this.src = FALLBACK_IMAGE; this.onerror = null; };
       }
-      videoPlayOverlay?.classList.add("hidden");
     };
+    const tryLoadAndPlay = () => {
+      const src = viewerVideo.getAttribute("data-video-src");
+      if (!src || viewerVideo.src) return;
+      viewerVideo.src = src;
+      viewerVideo.load();
+      videoLoadTimeoutId = setTimeout(showFallback, VIDEO_LOAD_TIMEOUT);
+      viewerVideo.play()
+        .then(() => {
+          if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
+          videoPlayOverlay?.classList.add("hidden");
+        })
+        .catch(() => videoPlayOverlay?.classList.remove("hidden"));
+    };
+    pendingVideoLoad = tryLoadAndPlay;
+    viewerVideo.onerror = showFallback;
+    viewerVideo.oncanplay = () => { if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; } };
+    if (!videoObserver && detailViewer) {
+      videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            if (currentMediaList[currentMediaIndex]?.type === "video" && typeof pendingVideoLoad === "function") pendingVideoLoad();
+          } else {
+            viewerVideo.pause();
+          }
+        });
+      }, { rootMargin: "50px", threshold: 0.1 });
+      videoObserver.observe(detailViewer);
+    }
+    const rect = detailViewer?.getBoundingClientRect?.();
+    if (rect && rect.top < window.innerHeight && rect.bottom > 0) {
+      tryLoadAndPlay();
+    }
     return;
   }
 
   if (imageSlot) imageSlot.classList.remove("hidden");
+  pendingVideoLoad = null;
+  if (videoLoadTimeoutId) { clearTimeout(videoLoadTimeoutId); videoLoadTimeoutId = null; }
   viewerVideo.pause();
   viewerVideo.classList.add("hidden");
   viewerVideo.src = "";
+  viewerVideo.removeAttribute("data-video-src");
   videoPlayOverlay?.classList.add("hidden");
+  videoFallback?.classList.add("hidden");
 
   const rawUrl = String(mediaItem.url || FALLBACK_IMAGE).trim();
   const url = proxyImageUrl(rawUrl);
@@ -407,16 +463,22 @@ function bindMediaNavigation() {
   });
 
   videoPlayOverlay?.addEventListener("click", () => {
-    viewerVideo.play()
-      .then(() => videoPlayOverlay.classList.add("hidden"))
-      .catch(() => {});
+    if (viewerVideo.src) {
+      viewerVideo.play()
+        .then(() => videoPlayOverlay.classList.add("hidden"))
+        .catch(() => { });
+    } else if (typeof pendingVideoLoad === "function") {
+      pendingVideoLoad();
+    }
   });
 }
 
 function updateSeo(product) {
-  const title = `${product.name} | Mỹ Phẩm Thái Nguyên`;
+  const fullTitle = `${product.name} | Mỹ Phẩm Thái Nguyên`;
+  const title = fullTitle.length > 60 ? product.name.substring(0, 56) + '...' : fullTitle;
   const shortPrice = formatVnd(product.currentPrice);
-  const description = `${shortPrice} • Giảm ${Math.max(Number(product.discount) || 0, 0)}% • ${product.description || `Deal tốt cho ${product.name}`}`.trim();
+  const descRaw = `${shortPrice} • Giảm ${Math.max(Number(product.discount) || 0, 0)}% • ${product.description || `Deal tốt cho ${product.name}`}`.trim();
+  const description = descRaw.length > 160 ? descRaw.substring(0, 157) + '...' : descRaw;
   const image = product.images[0] || FALLBACK_IMAGE;
   const canonical = `${location.origin}${buildPrettyProductPath(product.slug)}`;
 
@@ -438,14 +500,27 @@ function updateSeo(product) {
     image: product.images,
     description: product.details || product.description,
     category: product.category,
+    sku: product.id || product.slug,
+    brand: {
+      "@type": "Brand",
+      name: product.subCategory || product.category || "Mỹ Phẩm Thái Nguyên"
+    },
     offers: {
       "@type": "Offer",
       priceCurrency: "VND",
       price: product.currentPrice,
       availability: "https://schema.org/InStock",
-      url: canonical
+      url: canonical,
+      itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: "Mỹ Phẩm Thái Nguyên"
+      }
     }
   };
+  if (product.oldPrice && product.oldPrice > product.currentPrice) {
+    ld.offers.priceValidUntil = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+  }
   productJsonLd.textContent = JSON.stringify(ld, null, 2);
 }
 

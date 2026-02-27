@@ -5,7 +5,8 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 Disallow: /admin/
-Disallow: /*.json$
+Disallow: /assets/data/
+Disallow: /scripts/
 
 # Sitemap
 Sitemap: https://myphamthainguyen.com/sitemap.xml

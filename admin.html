@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,11 +9,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="assets/css/style.css?v=20260211" />
+  <link rel="icon" type="image/png" href="assets/images/logo.png" />
+  <link rel="apple-touch-icon" href="assets/images/logo.png" />
 </head>
+
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="logo" href="index.html">Mỹ Phẩm Thái Nguyên</a>
+      <a class="logo" href="index.html"><img src="assets/images/logo.png" alt="Mỹ Phẩm Thái Nguyên" /></a>
       <nav>
         <a class="admin-link" href="index.html">Trang chủ</a>
       </nav>
@@ -28,7 +32,8 @@
         </div>
 
         <div class="role-switch" role="tablist" aria-label="Loại tài khoản">
-          <button id="adminRoleBtn" class="role-chip active" type="button" data-role="admin" role="tab" aria-selected="true">
+          <button id="adminRoleBtn" class="role-chip active" type="button" data-role="admin" role="tab"
+            aria-selected="true">
             <span class="material-icons" aria-hidden="true">admin_panel_settings</span>
             <span>Admin</span>
           </button>
@@ -91,7 +96,7 @@
 
     <section id="adminDashboard" class="hidden">
       <section class="admin-header">
-        <h1>Bảng điều khiển sản phẩm</h1>
+        <h2>Bảng điều khiển sản phẩm</h2>
         <p>Thêm / sửa / xóa sản phẩm và lưu local. Muốn máy khác thấy dữ liệu mới: xuất bản lên GitHub.</p>
         <div class="admin-actions">
           <button id="exportBtn" class="btn-outline">Export JSON</button>
@@ -171,7 +176,9 @@
               </tr>
             </thead>
             <tbody id="affiliateTopProductsBody">
-              <tr><td colspan="4">Chưa có dữ liệu click.</td></tr>
+              <tr>
+                <td colspan="4">Chưa có dữ liệu click.</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -238,7 +245,9 @@
               </tr>
             </thead>
             <tbody id="blogPostTableBody">
-              <tr><td colspan="4">Chưa có bài viết.</td></tr>
+              <tr>
+                <td colspan="4">Chưa có bài viết.</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -253,7 +262,9 @@
               </tr>
             </thead>
             <tbody id="faqTableBody">
-              <tr><td colspan="3">Chưa có FAQ.</td></tr>
+              <tr>
+                <td colspan="3">Chưa có FAQ.</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -420,4 +431,5 @@
 
   <script src="assets/js/admin.js?v=20260214" defer></script>
 </body>
+
 </html>
