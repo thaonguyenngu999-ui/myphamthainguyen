@@ -91,7 +91,7 @@ body {
 
 .logo img {
   height: 48px;
-  max-width: 220px;
+  max-width: none;
   width: auto;
   display: block;
   object-fit: contain;
@@ -1750,7 +1750,7 @@ body {
 
 .home-page .logo img {
   height: 48px;
-  max-width: 220px;
+  max-width: none;
 }
 
 .home-page .header-search {
@@ -2547,8 +2547,8 @@ body {
   }
 
   .home-page .logo img {
-    height: 42px;
-    max-width: 200px;
+    height: 44px;
+    max-width: none;
   }
 
   .home-page .header-search {
